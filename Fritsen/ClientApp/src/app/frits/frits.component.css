@@ -1,0 +1,102 @@
+.board-image {
+  height: 60vh;
+  width: 90vh;
+  top: 18%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+  margin: auto;
+}
+
+@media all and (orientation: portrait) {
+  .board-image {
+    height: 60vw;
+    width: 90vw;
+  }
+}
+
+.handcard {
+  width: 10%;
+  height: 20%;
+  position: absolute;
+  top: 105%;
+  left: 30%;
+}
+.handcard:hover {
+  z-index:3;
+}
+
+.handcard.active {
+  outline: 2px solid blue;
+}
+
+.cardpile {
+  display: block;
+  width: 10%;
+  height: 20%;
+  position: absolute;
+  top: 4%;
+  left: 8%;
+  outline: 1px solid black;
+}
+
+.card {
+  position: absolute;
+  width: 100%;
+}
+
+.pile {
+  display: block;
+  width: 10%;
+  height: 20%;
+  position: absolute;
+  top: 4%;
+  left: 22%;
+}
+
+.pile.joker {
+  top: 40%;
+  left: 8%;
+}
+
+.pile:not(.empty).open {
+  outline:2px solid blue;
+}
+
+.pile.empty.open.show {
+  display: block;
+  background: rgba(255,255,255,0.3);
+}
+
+#message {
+  top: -23%;
+  left: -5vh;
+  width: 110%;
+  position: relative;
+  text-align: center;
+  font-size: 5vh;
+  color: white;
+  display: none;
+}
+
+@media all and (orientation: portrait) {
+  #message {
+    font-size: 5vw;
+    left: 0vw;
+    width: 100%;
+  }
+}
+
+
+#newgame {
+  width: 10%;
+  height: 16%;
+  position: absolute;
+  top: 108%;
+  left: 8%;
+  background-size: cover;
+  background-color: Transparent;
+  background-repeat: no-repeat;
+  border: none;
+  outline: none;
+}

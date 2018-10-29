@@ -1,0 +1,24 @@
+.body-content {
+  padding: 0px;
+  margin: 0px;
+  width:auto;
+}
+.col-sm-3 {
+  padding: 0;
+}
+.col-sm-3,.col-sm-9 {
+  float:none;
+}
+
+
+/* On small screens, the nav menu spans the full width of the screen. Leave a space for it. */
+.body-content {
+  padding-top:30px;
+  margin: 0;
+}
+
+.col-sm-3 {
+  width: 0px;
+}
+
+

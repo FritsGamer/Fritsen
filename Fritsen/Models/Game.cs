@@ -16,7 +16,7 @@ namespace Fritsen.Models
 
         public Game(Board board)
         {
-            this.hand = new SimpleHand(board.hand);
+            this.hand = new SimpleHand(board.hands.ElementAt(board.playerTurn));
             this.piles = board.piles.Select((p, index) => new SimplePile(index + 1, p)).ToArray();
             this.jokers = new SimplePile(0, board.jokers);
             this.deck = (int) Math.Ceiling(0.2 * board.deck.Count);
@@ -38,10 +38,12 @@ namespace Fritsen.Models
 
     public class SimpleHand
     {
+        public string name;
         public string[] cards;
 
         public SimpleHand(Hand hand)
         {
+            this.name = hand.playerName;
             this.cards = hand.cards.Select(c => c.imgCode()).ToArray();
         }
     }

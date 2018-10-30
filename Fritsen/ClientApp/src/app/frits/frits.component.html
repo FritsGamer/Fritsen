@@ -1,6 +1,6 @@
 <div class="table-image" [ngStyle]="{ 'background-image': 'url(' + table + ')','height':'100%','width':'100%'}">
   <div class="board-image" [ngStyle]="{ 'background-image': 'url(' + board + ')'}">
-    <div id="message">{{ status.description }}</div>
+    <div id="message">{{ hand.name + " | " + status.description }}</div>
     <div class="cardpile" (click)="frits()">
       <img class="card" src={{card}} *ngFor="let number of numbers" [ngStyle]="{'margin-top.%': number*1.6 }" />
     </div>
@@ -13,7 +13,9 @@
       <img class="card" *ngFor="let c of p.cards; let number = index;" [src]="cardloc + c + '.png'" [ngStyle]="{'margin-top.%': number }" />
     </div>
 
-    <button id="newgame" [ngStyle]="{'background-image': 'url(' + refresh + ')'}" (click)="newGame()"></button>
-    <img class="handcard" *ngFor="let c of game.hand.cards; let i = index" [id]="'card' + i" [src]="cardloc + c + '.png'" [ngStyle]="{'margin-left.%': i*6}" (click)="select($event)" />
+    <button id="newgame" class="button show" [ngStyle]="{'background-image': 'url(' + refresh + ')'}" (click)="newGame()"></button>
+    <button id="vuilefrits" [ngClass]="{'button': true,'show': start}" [ngStyle]="{'background-image': 'url(' + doek + ')'}" (click)="vuilefrits()"></button>
+    <button id="next" [ngClass]="{'button': true,'show': start}" [ngStyle]="{'background-image': 'url(' + refresh + ')'}" (click)="loadNextPlayer()"></button>
+    <img [ngClass]="{'handcard':true, 'hide': swapTurn}" *ngFor="let c of hand.cards; let i = index" [id]="'card' + i" [src]="cardloc + c + '.png'" [ngStyle]="{'margin-left.%': i*6}" (click)="select($event)" />
   </div>
 </div>

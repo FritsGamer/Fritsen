@@ -37,18 +37,20 @@ namespace Fritsen.Controllers
         {
             board = new Board();
             board.initialize();
-            
-            
-            board.hand.addCards(board.deck,5);
-            
+
+            Hand willem = new Hand("Willem");
+            Hand frits = new Hand("Frits");
+
+            willem.addCards(board.deck,5);
+            board.hands.Add(willem);
+            frits.addCards(board.deck, 5);
+            board.hands.Add(frits);
+
             board.addPile(board.deck);
             board.addPile();
-            
-
-            Game game = new Game(board);
 
             store();
-            return game;
+            return new Game(board);
         }
 
         [HttpGet("[action]")]
@@ -68,8 +70,8 @@ namespace Fritsen.Controllers
                 board.status = FritsRules.getResult("Fout");
                 return new Game(board);
             }
-            
-            Hand hand = board.hand;
+
+            Hand hand = board.hands.ElementAt(board.playerTurn);
             Pile p = pilePos == 0 ? board.jokers : board.piles.ElementAt(pilePos-1);
             PlayingCard pc = hand.cards.ElementAt(cardPos);
             
@@ -77,19 +79,53 @@ namespace Fritsen.Controllers
             if (board.status.value > 0 && p.cards.Count == 1 && !p.jokerPile)
                 board.addPile();
             else if (board.status.name == "Baudet")
-                baudet(hand);
+                newHand(hand);
 
-            Game game = new Game(board);
+            if (board.status.value > 0)
+                nextPlayer();
+
             store();
-            return game;
+            return new Game(board);
         }
 
-        public void baudet(Hand hand)
+        public void newHand(Hand hand)
         {
             int draws = hand.cards.Count;
             hand.bottomOfDeck(board.deck);
 
             hand.addCards(board.deck, draws);
+        }
+        
+        public void nextPlayer()
+        {
+            board.playerTurn = (board.playerTurn + 1) % board.hands.Count;
+        }
+
+        [HttpGet("[action]")]
+        public Game loadNextPlayer()
+        {
+            load();
+
+            nextPlayer();
+
+            store();
+            return new Game(board);
+        }
+
+        [HttpGet("[action]")]
+        public Game vuileFrits()
+        {
+            load();
+
+            Hand hand = board.hands.ElementAt(board.playerTurn);
+
+            if (hand != null && hand.cards.Count != 5)
+                return new Game(board);
+
+            newHand(hand);
+
+            store();
+            return new Game(board);
         }
 
         [HttpGet("[action]")]
@@ -97,12 +133,12 @@ namespace Fritsen.Controllers
         {
             load();
 
-            board.hand.addCards(board.deck, 2);
+            Hand hand = board.hands.ElementAt(board.playerTurn);
+            hand.addCards(board.deck, 2);
             board.status = FritsRules.getResult("Frits");
 
-            Game game = new Game(board);
             store();
-            return game;
+            return new Game(board);
         }
     }
 }

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpModule } from '@angular/http';
 import { RouterModule } from '@angular/router';
+import { ChatService } from './home/chat.service';
+import { WebSocketService } from './home/websocket.service';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
@@ -27,7 +29,10 @@ import { FritsComponent } from './frits/frits.component';
       { path: 'frits', component: FritsComponent },
     ])
   ],
-  providers: [],
+  providers: [
+    //ChatService,
+    //WebSocketService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

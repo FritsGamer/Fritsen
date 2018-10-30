@@ -20,8 +20,9 @@
   height: 20%;
   position: absolute;
   top: 105%;
-  left: 30%;
+  left: 35%;
 }
+
 .handcard:hover {
   z-index:3;
 }
@@ -59,6 +60,10 @@
   left: 8%;
 }
 
+.pile.lastmove {
+  outline: 2px solid red!important;
+}
+
 .pile:not(.empty).open {
   outline:2px solid blue;
 }
@@ -74,7 +79,7 @@
   width: 110%;
   position: relative;
   text-align: center;
-  font-size: 5vh;
+  font-size: 4.5vh;
   color: white;
   display: none;
 }
@@ -88,15 +93,29 @@
 }
 
 
-#newgame {
+.button {
+  display:none;
   width: 10%;
   height: 16%;
   position: absolute;
   top: 108%;
-  left: 8%;
   background-size: cover;
   background-color: Transparent;
   background-repeat: no-repeat;
   border: none;
   outline: none;
+}
+.button.show {
+  display: block;
+}
+
+#vuilefrits {
+  width: 16%;
+  height: 18%;
+  top: 107%;
+  left: 15%;
+}
+
+#next {
+  left: 90%;
 }

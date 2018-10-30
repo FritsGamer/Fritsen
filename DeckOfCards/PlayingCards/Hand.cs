@@ -5,10 +5,18 @@ namespace DeckOfCards.PlayingCards
 {
     public class Hand
     {
+        public string playerName;
         public List<PlayingCard> cards;
         
         public Hand()
         {
+            playerName = "";
+            cards = new List<PlayingCard>();
+        }
+
+        public Hand(string name)
+        {
+            playerName = name;
             cards = new List<PlayingCard>();
         }
 
@@ -25,7 +33,7 @@ namespace DeckOfCards.PlayingCards
         }
         public Result placeOnPile(PlayingCard card, Pile pile, bool frits)
         {
-            Result res = pile.fitsOnPile(card, frits, cards.Count);
+            Result res = pile.fitsOnPile(card, frits, this);
 
             if (res.value > 0)
             {

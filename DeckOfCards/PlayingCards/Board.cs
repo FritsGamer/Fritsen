@@ -10,8 +10,9 @@ namespace DeckOfCards.PlayingCards
         public List<Pile> piles;
         public PlayingCardDeck deck;
         public Pile jokers;
-        public Hand hand;
+        public List<Hand> hands;
         public Result status;
+        public int playerTurn;
 
         public Board()
         {
@@ -19,8 +20,9 @@ namespace DeckOfCards.PlayingCards
             piles = new List<Pile>();
             jokers = new Pile();
             jokers.jokerPile = true;
-            hand = new Hand();
+            hands = new List<Hand>();
             status = FritsRules.getResult("Goed");
+            this.playerTurn = 0;
         }
 
         public void initialize()
@@ -89,11 +91,11 @@ namespace DeckOfCards.PlayingCards
             return PlayingCard.fromCode(cards.LastOrDefault().code());   
         }
 
-        public Result fitsOnPile(PlayingCard card, bool frits, int cardsLeft)
+        public Result fitsOnPile(PlayingCard card, bool frits, Hand hand)
         {
             PlayingCard newCard = PlayingCard.fromCode(card.code());
 
-            return FritsRules.checkCards(newCard,this,frits, cardsLeft);
+            return FritsRules.checkCards(newCard,this,frits, hand);
         }
     }
 }

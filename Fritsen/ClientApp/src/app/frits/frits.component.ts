@@ -13,15 +13,18 @@ export class FritsComponent {
   public Math: any;
   public numbers: number[];
   public game: Game;
+  public start: boolean;
   public selectedCard: string;
+  public lastmove: string = "";
   public showOpen: boolean = false;
   public status: Result;
   public baseUrl: string
+  public hand: Hand;
+  public swapTurn: boolean = false;
 
   constructor(private http: HttpClient, @Inject('BASE_URL') baseUrl: string) {
     this.baseUrl = baseUrl;
     this.Math = Math;
-
     this.newGame();
   }
 
@@ -30,6 +33,7 @@ export class FritsComponent {
   card: string = './assets/img/cards/RF.png';
   cardloc: string = './assets/img/cards/';
   refresh: string = './assets/img/refresh.png';
+  doek: string = './assets/img/doek.png';
 
   public newGame() {
     this.http.get<Game>(this.baseUrl + 'api/Frits/newGame').subscribe(result => {
@@ -37,8 +41,21 @@ export class FritsComponent {
       this.setStatus(result.status);
       this.numbers = Array(result.deck).fill(this.numbers).map((x, i) => i);
       this.showOpen = false;
+      this.start = true;
+      this.hand = result.hand;
     }, error => console.error(error));
   }
+
+  public vuilefrits() {
+    if (!this.start)
+      return;
+
+    this.http.get<Game>(this.baseUrl + 'api/Frits/vuileFrits').subscribe(result => {
+      this.game = result;
+      this.hand = result.hand;
+    }, error => console.error(error));
+  }
+
 
   public frits() {
     if (this.showOpen)
@@ -48,15 +65,17 @@ export class FritsComponent {
       this.game = result;
       this.numbers = Array(result.deck).fill(this.numbers).map((x, i) => i);
       this.showOpen = true;
+      this.start = false;
+      this.hand = result.hand;
       this.setStatus(result.status);
     }, error => console.error(error));
   }
-
-
+  
   public select(event) {
     var target = event.target || event.srcElement || event.currentTarget;
     var idAttr = target.id;
     if (idAttr != "") {
+      $('.pile').removeClass('lastmove');
       if (this.selectedCard == null || this.selectedCard != idAttr) {
         this.selectedCard = idAttr;
         $('.handcard').removeClass('active');
@@ -72,24 +91,24 @@ export class FritsComponent {
     if (this.selectedCard == null)
       return;
     var target = event.target || event.srcElement || event.currentTarget;
-
-    var idAttr = target.id;
-    if (idAttr == "")
-      idAttr = target.parentElement.id;
-    else if (!this.showOpen && idAttr != "pile0")
+    
+    if (target.id == "")
+      target = target.parentElement;
+    else if (!this.showOpen && target.id != "pile0")
       return;
 
-    if (idAttr != "") {
-      var url = this.baseUrl + 'api/Frits/playCard?card=' + this.selectedCard + '&pile=' + idAttr + '&frits=' + this.showOpen;
+    if (target.id != "") {
+      var url = this.baseUrl + 'api/Frits/playCard?card=' + this.selectedCard + '&pile=' + target.id + '&frits=' + this.showOpen;
 
       this.http.get<Game>(url).subscribe(result => {
         this.game = result;
+        this.start = false;
         this.setStatus(result.status);
-        this.numbers = Array(result.deck).fill(this.numbers).map((x, i) => i);
-        if (result.status.value > 0) { 
-          this.selectedCard = null;
-          $('.handcard').removeClass('active');
+        //this.numbers = Array(result.deck).fill(this.numbers).map((x, i) => i);
+        if (result.status.value > 0) {
+          this.lastmove = '#' + target.id;
           this.showOpen = false;
+          this.nextPlayer();
         }
       }, error => console.error(error));
     }
@@ -97,11 +116,27 @@ export class FritsComponent {
 
   public setStatus(status) {
     this.status = status;
-    if (status.value < 2) {
-      $('#message').fadeIn().delay(3000).fadeOut();
-    } else {
-      this.status.description = "";
-    }
+    $('#message').fadeIn().delay(3000).fadeOut();
+  }
+
+  public nextPlayer() {
+    this.swapTurn = true;
+    setTimeout(function () {
+      this.selectedCard = null;
+      $('.handcard').removeClass('active');
+      this.hand = this.game.hand;
+      this.swapTurn = false;
+      if(this.lastmove != "")
+        $(this.lastmove).addClass('lastmove');
+      this.setStatus(this.status);
+    }.bind(this), 4000);
+  }
+
+  public loadNextPlayer() {
+    this.http.get<Game>(this.baseUrl + 'api/Frits/loadNextPlayer').subscribe(result => {
+      this.game = result;
+      this.nextPlayer();
+    }, error => console.error(error));
   }
 }
 
@@ -119,6 +154,7 @@ interface Pile {
 }
 
 interface Hand {
+  id: number;
   cards: string[];
 }
 

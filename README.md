@@ -1,2 +1,0 @@
-# Fritsen
-Fritsen card game

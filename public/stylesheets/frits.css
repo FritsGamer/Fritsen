@@ -1,0 +1,206 @@
+#playerName {
+	display: block;
+    position: absolute;
+    background-color: transparent;
+    top: 15%;
+    left: 27%;
+    width: 46%;
+    text-align: center;
+    height: 12%;
+    font-size: 6vh;
+    color: white;
+}
+
+::placeholder { 
+  color: white;
+}
+
+.start-image{
+    display: block;
+    position: absolute;
+    background-image: url(../images/start.png);
+    background-repeat: round;
+    background-color: transparent;
+    border: none;
+    top: 36%;
+    left: 33%;
+    height: 19%;
+    width: 34%;
+}
+
+.table-image{
+  background-image: url("../images/Table.png");
+  height: 100vh;
+}
+
+.board-image {
+  background-image: url("../images/Snijplank.png");
+  height: 60vh;
+  width: 90vh;
+  top: 18%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+  margin: auto;
+}
+
+@media all and (orientation: portrait) {
+  .board-image {
+    height: 60vw;
+    width: 90vw;
+  }
+}
+
+.cardblock{
+  display: block;
+  width: 12%;
+  height: 24%;
+  position: absolute;
+}
+
+#hand img {
+  top: 105%;
+  left: 6%;
+}
+
+#hand img:hover {
+  z-index:3;
+}
+
+#hand img.active {
+  outline: 2px solid blue;
+}
+
+#deck {
+  top: 4%;
+  left: 6%;
+}
+
+.card {
+  position: absolute;
+  width: 100%;
+}
+
+.pile {
+  top: 4%;
+  left: 22%;
+}
+
+.pile.joker {
+  top: 40%;
+  left: 6%;
+}
+
+.pile.lastmove {
+  outline: 2px solid red!important;
+}
+
+.pile:not(.empty).show {
+  outline:2px solid blue;
+}
+
+.pile.empty.show {
+  display: block;
+  background: rgba(255,255,255,0.3);
+}
+
+.message {
+  top: -27%;
+  left: -5vh;
+  width: 110%;
+  position: relative;
+  text-align: center;
+  font-size: 4.5vh;
+  color: white;
+}
+
+#turn {
+  position: absolute;
+  display: block;
+  top: -12%;
+  left: 5%;
+  text-align: left;
+  width: 80%;
+}
+
+#waiting{
+  top: -20%;
+  width: 100%;
+  position: relative;
+  text-align: center;
+  font-size: 7vh;
+  color: white;
+}
+
+#players{    
+	top: 6%;
+    left: 11%;
+    width: 80%;
+    position: absolute;
+    text-align: left;
+    font-size: 6vh;
+    color: white;
+}
+
+.ownname{
+  color: red;	
+}
+
+
+@media all and (orientation: portrait) {
+  .message {
+    font-size: 4.5vw;
+    left: 0vw;
+    width: 100%;
+  }
+
+  #playerName {
+	font-size: 6vw;
+  }
+
+  #waiting{
+	font-size: 7vw;
+  }
+
+  #players{ 
+	font-size: 6vw;  	
+  }
+}
+
+.button {
+  display: none;
+  width: 12%;
+  height: 16%;
+  position: absolute;
+  top: 108%;
+  left: 66%;
+  background-size: cover;
+  background-color: Transparent;
+  background-repeat: no-repeat;
+  border: none;
+  outline: none;
+}
+
+#newgame {
+    background-image: url(../images/go.png);
+    width: 20%;
+    height: 22%;
+    top: 103%;
+    left: 38%;
+}
+
+#vuilefrits {
+  background-image: url("../images/doek.png");
+  width: 16%;
+  height: 18%;
+  top: 107%;
+  left: 84%;
+}
+
+#hideCards {
+  width: 14%;
+  height: 18%;
+  top: 104%;
+  left: 3%;
+}
+

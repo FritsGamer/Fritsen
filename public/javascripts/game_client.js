@@ -4,6 +4,7 @@
 var socket = io();
 var canPlayCard = false;
 var started = false;
+var timeOutId = false;
 
 function Rule(name, description, value) {
   this.name = name;
@@ -24,6 +25,7 @@ socket.on("result", function(result) {
 	}
 
 	if(result.value > 0){
+		$("#vuilefrits").hide();
 		canPlayCard = false;
 	}
 });
@@ -50,13 +52,18 @@ socket.on("match started", function() {
 
 
 socket.on("game over", function(name) {
-	setMessage("Game is over\n" + name + " lost the game");
+	$("#turn").text(name + " heeft verloren en moet 2 fritsjes nemen");
+	var started = false;
+	// setMessage("Game is over\n" + name + " lost the game");
+	setTimeout(function(){ resetGame(); }, 5000);
+});
+
+function resetGame(){
 	$("#hand").empty();
 	$("#deck").empty();
 	$("#piles").empty();
-	var started = false;
-	setTimeout(function(){ joinQueue(); }, 5000);
-});
+	joinQueue();
+}
 
 //////////  Functions
 function enterQueue(name){
@@ -64,7 +71,9 @@ function enterQueue(name){
 }
 
 function frits() {
-	socket.emit("frits");
+	if (canPlayCard){
+		socket.emit("frits");
+	}
 }
 
 function vuileFrits() {
@@ -80,7 +89,16 @@ function startMatch() {
 function setMessage(msg){
 	var message = $('#status');
 	message.text(msg);
-	message.fadeIn().delay(3000).fadeOut();
+	
+	if(timeOutId){
+		clearTimeout ( timeOutId );
+	}else{
+		message.fadeIn();
+	}
+	timeOutId = setTimeout(function(){
+		message.fadeOut();
+		timeOutId = false;
+	}, 3000);
 }
 
 function setTurn(player){

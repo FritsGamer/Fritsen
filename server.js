@@ -20,7 +20,7 @@ app.get("*", function(req, res) {
 });
 
 // Start http server
-http.setTimeout(20000);
+http.setTimeout(10000);
 http.listen(app.get("port"), function() {
 	console.log("Node app started on port %s", app.get("port"));
 });

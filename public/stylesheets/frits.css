@@ -105,22 +105,24 @@
 }
 
 .message {
-  top: -27%;
-  left: -5vh;
+  top: -28%;
+  left: -5%;
   width: 110%;
-  position: relative;
+  height: 20%;
+  position: absolute;
   text-align: center;
-  font-size: 4.5vh;
-  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4vh;
+  color: darkgrey;
 }
 
 #turn {
-  position: absolute;
   display: block;
-  top: -12%;
-  left: 5%;
-  text-align: left;
-  width: 80%;
+  position: absolute;
+  top: -10%;
+  color: white;
 }
 
 #waiting{
@@ -133,13 +135,13 @@
 }
 
 #players{    
-	top: 6%;
-    left: 11%;
-    width: 80%;
-    position: absolute;
-    text-align: left;
-    font-size: 6vh;
-    color: white;
+  top: 6%;
+  left: 11%;
+  width: 80%;
+  position: absolute;
+  text-align: left;
+  font-size: 6vh;
+  color: white;
 }
 
 .ownname{
@@ -149,7 +151,7 @@
 
 @media all and (orientation: portrait) {
   .message {
-    font-size: 4.5vw;
+    font-size: 4vw;
     left: 0vw;
     width: 100%;
   }

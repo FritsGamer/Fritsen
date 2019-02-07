@@ -12,21 +12,23 @@ function Rule(name, description, value) {
   this.value = value;
 }
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer) {
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result) {
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
-	setTurn(turnPlayer);
-});
-
-socket.on("result", function(result) {
-	if(result.value < 2){
-		setMessage(result.description);
-	}
-
-	if(result.value > 0){
-		$("#vuilefrits").hide();
-		canPlayCard = false;
+	
+	if(result){
+		if(result.value < 2) setMessage(result.description);
+		
+		if(result.value > 0){
+			$("#vuilefrits").hide();
+			if(result.name == "Baudet"){
+				next = false;
+				setTurn(turnPlayer, false);
+				$('#turn').text("Baudet");
+			}else
+				setTurn(turnPlayer, true);
+		}
 	}
 });
 
@@ -44,10 +46,11 @@ socket.on("queue", function(players) {
 	}
 });
 
-socket.on("match started", function() {
+socket.on("match started", function(turnPlayer) {
 	var canPlayCard = false;
 	var started = true;
 	startGame();
+	setTurn(turnPlayer, true);
 });
 
 
@@ -101,12 +104,25 @@ function setMessage(msg){
 	}, 3000);
 }
 
-function setTurn(player){
-	if(socket.id === player.id){
-		canPlayCard = true;
-	}
+function setTurn(player, next){
 	var turnField = $('#turn');
-	turnField.text(player.name + "'s turn");
+	if(!player){
+		turnField.text("Iedereen mag nu vuile fritsen");
+		return;
+	}
+
+	if(socket.id === player.id)
+		canPlayCard = next;
+	else
+		canPlayCard = !next;
+	
+
+	if(canPlayCard){
+		turnField.text("Het is jouw beurt!");
+	}else{
+		var numCards = player.cards == 1 ? "laatste frits!" :  ("nog " + player.cards + " kaarten");
+		turnField.text(player.name + " is aan de beurt en heeft " + numCards);
+	}
 }
 
 function playCard(card, pile) {	

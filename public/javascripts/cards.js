@@ -64,13 +64,14 @@ function showHand(cards){
 }
 
 function select(card) {
-	if ($(card).hasClass("active")) {
-		card.classList.remove('active');
-		$('.open').removeClass('show');
+	var selected = $(card);
+	if (selected.hasClass('active')) {
+		selected.removeClass('active');
+		$('.open').removeClass('active');
 	} else {
 		$('img').removeClass('active');
-		card.classList.add('active');
-		$('.open').addClass('show');
+		selected.addClass('active');
+		$('.open').addClass('active');
 	}
 }
 
@@ -78,7 +79,7 @@ function placeCard(pile) {
 	if (!pile.hasClass('open'))
 	  return;
 
-	var selected = $('.active');	
+	var selected = $('#hand .active');	
 	if (selected.length != 1)
 	  return;
 

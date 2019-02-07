@@ -67,10 +67,6 @@
   z-index:3;
 }
 
-#hand img.active {
-  outline: 2px solid blue;
-}
-
 #deck {
   top: 4%;
   left: 6%;
@@ -91,16 +87,13 @@
   left: 6%;
 }
 
-.pile.lastmove {
-  outline: 2px solid red!important;
+.active {
+  outline: 0.4vh solid blue;
 }
 
-.pile:not(.empty).show {
-  outline:2px solid blue;
-}
-
-.pile.empty.show {
+.pile.empty.active {
   display: block;
+  outline: none;
   background: rgba(255,255,255,0.3);
 }
 
@@ -166,6 +159,10 @@
 
   #players{ 
 	font-size: 6vw;  	
+  }
+
+  .active {
+    outline: 0.4vw solid blue;
   }
 }
 

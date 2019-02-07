@@ -37,6 +37,14 @@
 				$('#playerName').focus();
 				$('.game').hide();
 				$('.queue').hide();
+
+				$('#playerName').keyup(function(event) {
+					event.preventDefault();
+					if (event.keyCode === 13) {
+						joinQueue();
+					}
+				});
+
 			});
 			
 			function joinQueue(){

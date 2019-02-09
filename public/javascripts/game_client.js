@@ -3,6 +3,7 @@
 
 var socket = io();
 var canPlayCard = false;
+var canVuileFrits = true;
 var started = false;
 var timeOutId = false;
 
@@ -22,6 +23,8 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlay
 		
 		if(result.value > 0){
 			$("#vuilefrits").hide();
+			canVuileFrits = false;
+
 			if(result.name == "Baudet"){
 				next = false;
 				setTurn(turnPlayer, false);
@@ -47,8 +50,8 @@ socket.on("queue", function(players) {
 });
 
 socket.on("match started", function(turnPlayer) {
-	var canPlayCard = false;
-	var started = true;
+	canPlayCard = false;
+	canVuileFrits = true;
 	startGame();
 	setTurn(turnPlayer, true);
 });
@@ -56,7 +59,6 @@ socket.on("match started", function(turnPlayer) {
 
 socket.on("game over", function(name) {
 	$("#turn").text(name + " heeft verloren en moet 2 fritsjes nemen");
-	var started = false;
 	// setMessage("Game is over\n" + name + " lost the game");
 	setTimeout(function(){ resetGame(); }, 5000);
 });
@@ -80,8 +82,14 @@ function frits() {
 }
 
 function vuileFrits() {
-	if(!started){
+	if(canVuileFrits){
 		socket.emit("vuileFrits");
+		$('#vuilefrits').addClass('wait');
+		canVuileFrits = false;
+		setTimeout(function(){ 
+			$('#vuilefrits').removeClass('wait'); 
+			canVuileFrits = true;
+		}, 2000);
 	}
 }
 

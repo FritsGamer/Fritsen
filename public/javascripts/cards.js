@@ -34,7 +34,7 @@ function showPiles(piles, frits, lastmove){
 	
 		for (j = 0; j < pile.length; j++) { 
 			var c = pile[j];
-			var img = "<img class='card' src='../images/cards/" + c + ".png' style=\"margin-top:" + (j*0.2) + "%\"/>";
+			var img = "<img class='card' src='../images/cards/" + c + ".png' style=\"margin-top:" + (j*0.25) + "%\"/>";
 			p.append(img);
 		}
 		p.click(function() {
@@ -48,9 +48,25 @@ function showHand(cards){
 	var hand = $("#hand");
 	hand.empty();
 
+	var singleRow = cards.length < 14;
+	var firstRow = singleRow ? cards.length : Math.ceil(cards.length / 2);
+	var startMargin = 48;
+	var firstRowTop = singleRow ? 0 : -8;
+	var secondRowTop = 5;
+	var cardMargin = 8;
+
 	for (i = 0; i < cards.length; i++) { 
 		c = cards[i];
-		elem = "<img id='card" + i + "' class='cardblock' style=\"margin-left:" + (i*9) + "%\" src='../images/cards/" + c + ".png' onclick='select(this)' />";
+		var topMargin, leftMargin;
+		if(i < firstRow){
+			topMargin = firstRowTop;
+			leftMargin = startMargin - 4 * firstRow + cardMargin * i;
+		} else {
+			topMargin = secondRowTop;
+			leftMargin = startMargin - 4 * (cards.length - firstRow) + cardMargin * (i - firstRow);
+		}
+
+		elem = "<img id='card" + i + "' class='cardblock' style='margin-top:" + topMargin + "%; margin-left:" + leftMargin + "%' src='../images/cards/" + c + ".png' onclick='select(this)' />";
 		hand.append(elem);
 	}
 }

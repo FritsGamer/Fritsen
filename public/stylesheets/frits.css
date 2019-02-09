@@ -63,7 +63,6 @@
 
 #hand img {
   top: 105%;
-  left: 6%;
 }
 
 #hand img:hover {
@@ -192,11 +191,15 @@
 }
 
 #vuilefrits {
-  background-image: url("../images/doek.png");
+  background-image: url("../images/vuilefrits.png");
   width: 16%;
   height: 18%;
   top: 107%;
   left: 84%;
+}
+
+#vuilefrits.wait{
+	background-image: url("../images/vuilefritswait.png");
 }
 
 #hideCards {

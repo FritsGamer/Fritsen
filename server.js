@@ -1,12 +1,12 @@
 ///// SETUP SERVER
 
-var express = require('express');
-var app = express();
+const express = require('express');
+const app = express();
 
 app.use(express.static("public"));  // Staticly serve pages, using directory 'public' as root 
 
-var server = require('http').createServer(app).listen(process.env.PORT || 9999);
-var io = require('socket.io').listen(server);
+const server = app.listen(process.env.PORT || 9999);
+const io = require('socket.io')(server);
 console.log("Started server on port 9999");
 
 // GLOBAL DATA
@@ -15,10 +15,11 @@ var players = {};
 var matches = {};
 
 // CONSTANTS
-var vuileFritsTime = 8000;
-var vuileFritsTimeout = 2000;
-var baudetTime = 5000;
-var log = false;
+const vuileFritsTime = 8000;
+const vuileFritsTimeout = 2000;
+const baudetTime = 5000;
+const startHand = 5;
+const log = false;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -168,14 +169,11 @@ function playCard(socketId, cardId, pileId) {
 
 			if(checkWin(match, player, result))
 				return;
-		} else {
-			//add new pile after placement on empty pile
-			if (pileId > 0 && match.piles[pileId].cards.length == 1)
-				addPile(match);
 		}
 
 		if(match.state == 2 && match.baudetTimeout){
 			clearTimeout ( match.baudetTimeout );
+			match.baudetTimeout = false;
 		}
 		
 		match.state = 1;
@@ -193,7 +191,6 @@ function playCard(socketId, cardId, pileId) {
 				updateCards(match, getRule("Goed"));
 			}, baudetTime);
 		} else {
-			match.baudetTimeout = false;
 			nextPlayer(match);
 		}
 	}
@@ -210,6 +207,11 @@ function fritsCards(){
 			match.state = 1;
 			drawCards(player.cards, match.deck, 2);
 			match.frits = true;	
+
+			//add new pile if no pile is empty
+			if (match.piles[match.piles.length - 1].cards.length > 0)
+				addPile(match);
+
 			var rule = getRule("Frits");
 			var result = new Rule(rule.name, player.name + rule.description, rule.value);
 			updateCards(match, result);
@@ -274,19 +276,17 @@ function getTurnPlayer(match){
 
 
 function nextPlayer(match){
-	if(!match.turnId){
+	var index = match.playerIds.indexOf(match.turnId);
+	if(index < 0) {		
 		match.turnId = match.playerIds[0];
 		return;
 	}
 
-	var index = match.playerIds.indexOf(match.turnId);
-	if(index < 0) return;
-
 	var next = (index + 1) % match.playerIds.length;
 	match.turnId = match.playerIds[next];
 
-	var nextPlayer = players[match.turnId];
-	if(nextPlayer && nextPlayer.done)
+	var p = players[match.turnId];
+	if(p && p.done)
 		nextPlayer(match);
 }
 
@@ -381,7 +381,7 @@ function shuffle(deck) {
 
 function getHand(player, deck){
 	player.cards = [];
-	drawCards(player.cards, deck, 5);
+	drawCards(player.cards, deck, startHand);
 }
 
 function drawCards(cards, deck, numCards){
@@ -399,7 +399,9 @@ function newHand(hand, deck){
 	drawCards(hand, deck, numCards);
 }
 
+
 // Fritsen Rules
+
 function Pile(cards){
   this.cards = cards;
 }
@@ -436,7 +438,6 @@ var Rules = [
 	new Rule("JokerFout", "Jokers mogen alleen op de jokerstapel: neem 1 fritsje", 0),
 	new Rule("Uit", " is uitgefritsd. ", 1),
 	new Rule("VuileFrits", "Vuile Frits voor ", 0),
-	new Rule("Start", "Wil je Vuile Fritsen?", 0),
 	new Rule("Disconnect", " heeft het spel verlaten", 0)
 ];
 
@@ -452,7 +453,7 @@ function getRule(name)
 //4. Jack of clubs on Red Queen or vice versa (Joris)
 //5. King on Ace of Hearts or vice versa (Lisa)
 //6. 6 on a Queen (Baudet)
-//7. 3 of Clubs on a 6 (Klaver)
+//7. 3 of Clubs on a 6 after move Baudet (Klaver)
 //8. Same suit with higher value
 //9. Same suit with 1 lower value (Offer)
 //10. Same suit with 2 on Ace
@@ -542,7 +543,7 @@ function checkCards(cardId, pileId, match, hand)
 			return getRule("Joris");
 
 		//6. 6 on a Queen (Baudet)
-		if (cardId == '6')
+		if (cardId == '6' && hand.length > 1)
 			return getRule("Baudet");
 	}
 
@@ -603,9 +604,6 @@ function placeOnPile(cardId, pileId, match, hand)
 
 	return res;
 }
-
-
-
 
 
 // Helper Functions

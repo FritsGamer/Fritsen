@@ -70,7 +70,7 @@ function resetGame(){
 
 //////////  Functions
 function enterQueue(name){
-	socket.emit("join queue", name);
+	socket.emit("joinQueue", name);
 }
 
 function frits() {
@@ -81,12 +81,12 @@ function frits() {
 
 function vuileFrits() {
 	if(!started){
-		socket.emit("vuile frits");
+		socket.emit("vuileFrits");
 	}
 }
 
 function startMatch() {
-	socket.emit("start match");
+	socket.emit("startMatch");
 }
 
 function setMessage(msg){
@@ -129,6 +129,6 @@ function playCard(card, pile) {
 	var cardNum = parseInt(card.replace(/\D/g,''));
 	var pileNum = parseInt(pile.replace(/\D/g,''));
 	if (canPlayCard && Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
-		socket.emit("play card", cardNum, pileNum);
+		socket.emit("playCard", cardNum, pileNum);
 	}
 }

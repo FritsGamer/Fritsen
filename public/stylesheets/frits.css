@@ -29,8 +29,11 @@
 }
 
 .table-image{
-  background-image: url("../images/Table.png");
+  background-image: url("../images/Table.jpg");
   height: 100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
 }
 
 .board-image {

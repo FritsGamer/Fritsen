@@ -15,8 +15,8 @@ var players = {};
 var matches = {};
 
 // CONSTANTS
-var vuileFritsTime = 10000;
-var vuileFritsTimeout = 3000;
+var vuileFritsTime = 8000;
+var vuileFritsTimeout = 2000;
 var baudetTime = 5000;
 var log = false;
 
@@ -62,7 +62,12 @@ function onDisconnect(){
 			var result = new Rule(rule.name, player.name + rule.description, rule.value);
 			checkWin(match, player, result);
 		}
+	} else if (player.inQueue){
+		player.inQueue = false;
+		var queue = getQueue();
+		queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
 	}
+		
 	
 	delete players[this.id];
 }
@@ -122,6 +127,7 @@ function createMatch() {
 	
 	//openPile
 	var secondPile = addPile(match);
+
 	match.playerIds.forEach( function(id){ io.to(id).emit("match started", false); });
 	updateCards(match, false);
 

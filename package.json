@@ -5,7 +5,7 @@
   "version": "0.0.9",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node pm2.js"
   },
   "dependencies": {
     "express": "~4.16.4",

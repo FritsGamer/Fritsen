@@ -40,6 +40,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('playCard', function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
+	if(log) console.log("connection handled");
 });
 
 
@@ -71,6 +72,7 @@ function onDisconnect(){
 		
 	
 	delete players[this.id];
+	if(log) console.log("player deleted");
 }
 
 
@@ -90,6 +92,7 @@ function joinQueue(socketId, name) {
 	
 	var queue = getQueue();
 	queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
+	if(log) console.log("queue join handled");
 }
 
 function createMatch() {
@@ -136,6 +139,7 @@ function createMatch() {
 		nextPlayer(match);
 		updateCards(match, getRule("Goed"));
 	}, vuileFritsTime);
+	if(log) console.log("match created");
 }
 
 
@@ -217,9 +221,12 @@ function fritsCards(){
 			updateCards(match, result);
 		}
 	}
+	if(log) console.log("fritsCards handled");
 }
 
 function vuileFritsCards() {
+	while(true)
+		var x = 5;
 	if(log) console.log("vuileFritsCards: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	if(match && match.state == 0){
@@ -233,6 +240,7 @@ function vuileFritsCards() {
 			player.vuilefrits = Date.now() + vuileFritsTimeout;
 		}
 	}
+	if(log) console.log("vuileFritsCards handled");
 }
 
 
@@ -265,6 +273,7 @@ function updateCards(match, result) {
 			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, turn, result);
 		}
 	}
+	if(log) console.log("updated cards");	
 }
 
 function getTurnPlayer(match){
@@ -426,23 +435,24 @@ var Rules = [
 	new Rule("Offer", "Offerfrits: Neem 1 fritsje", 1),
 	new Rule("Joker", "Joker: Alle anderen nemen 1 fritsje", 1),
 	new Rule("Kim", "Kim: Alle anderen nemen 1 fritsje", 1),
-	new Rule("VierdeKim", "Vier Kimmen: Alle anderen nemen 2 fritsjes", 1),
+	new Rule("VierdeKim", "Vierde Kim: Alle anderen nemen 2 fritsjes", 1),
 	new Rule("Joris", "Jorisje: Alle anderen nemen 1 fritsje", 1),
 	new Rule("Lisa", "Lisa: Alle anderen nemen 1 fritsje", 1),
 	new Rule("Baudet", "Baudet: Ruil je hand met de stapel en neem 2 fritsjes", 1),
+	new Rule("BaudetFout", "Je kunt niet uitkomen met Baudet, neem 1 fritsje", 0),
 	new Rule("Klaver", "Klaver! Je voorkomt dat Thierry aan de macht komt. De speler met Baudet mag niet ruilen", 1),
-	new Rule("DubbelNegen", "Iedereen dubbel Frits: Alle anderen nemen 2 fritsjes", 1),
+	new Rule("KlaverFout", "Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0),
+	new Rule("DubbelNegen", "Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1),
 	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1),
 	new Rule("Frits", " heeft gefritsd", 1),
-	new Rule("JokerUit", "Je mag niet uitkomen met een Joker: neem 1 fritsje", 0),
-	new Rule("JokerFout", "Jokers mogen alleen op de jokerstapel: neem 1 fritsje", 0),
+	new Rule("JokerUit", "Je mag niet uitkomen met een Joker, neem 1 fritsje", 0),
+	new Rule("JokerFout", "Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0),
 	new Rule("Uit", " is uitgefritsd. ", 1),
 	new Rule("VuileFrits", "Vuile Frits voor ", 0),
 	new Rule("Disconnect", " heeft het spel verlaten", 0)
 ];
 
-function getRule(name)
-{
+function getRule(name) {
 	return Rules.find(function(r) { return r.name == name; });
 }
 
@@ -460,14 +470,19 @@ function getRule(name)
 //11. All same suit: King + Ace on Queen - Not implemented
 
 
-function checkCards(cardId, pileId, match, hand)
+function checkCards(card, pileId, match, hand)
 {	
-	var card = hand[cardId];
-	var pile = match.piles[pileId];
+    //7. 3 of Clubs on the last 6, when baudet is executed (Klaver) 
+	//   first check as all other moves should be rejected during the baudetTimeout
+	if(match.state == 2){
+		if(card.identity == 3 && card.suit == "Clubs" && match.lastMove == pileId)
+			return getRule("Klaver");
+		else
+			return getRule("KlaverFout");
+	}
 
-    //7. 3 of Clubs on a 6 (Klaver)
-	if(match.state == 2 && (card.identity != 3 || card.suit != "Clubs" || match.lastMove != pileId))
-		return getRule("Fout");
+
+	var pile = match.piles[pileId];
 
 	//1. Only if card is Joker on Joker pile (Joker)
 	if (card.identity == "Joker" || pile.jokerPile)
@@ -492,21 +507,7 @@ function checkCards(cardId, pileId, match, hand)
 	var cardId = Identities[card.identity];
 	var pileId = Identities[top.identity];
 	var cardSuit = Suits[card.suit];
-	var pileSuit = Suits[top.suit];		
-
-	//7. 3 of Clubs on a 6 (Klaver)
-	if(match.state == 2){
-		var pc = pile.cards;
-		if(pc.length < 2)			
-			return getRule("Fout");
-
-		var pileSecondCard = Identities[pc[pc.length - 2].identity];
-
-		if(pileId == '6' && pileSecondCard == 'Q')
-			return getRule("Klaver");
-		 else
-			return getRule("Fout");		
-	}
+	var pileSuit = Suits[top.suit];
 
 	//2. Card is a 9
 	if (cardId == '9')
@@ -522,32 +523,30 @@ function checkCards(cardId, pileId, match, hand)
 	{
 		if(cardId == 'Q')
 		{
-			var counter = 0;
-			pile.cards.forEach(function(c)
-			{
-				if (Identities[c.identity] == 'Q')
-					counter++;
-				else
-					counter = 0;
-			});
-
-			if(counter == 3)
-				return getRule("VierdeKim");
-			else
-				return getRule("Kim");
+			for(var i = pile.cards.length - 1; i >= 0; i--){
+				var c = Identities[pile.cards[i].identity];
+				if (c != 'Q')
+					return getRule("Kim");
+				
+				if(i <= pile.cards.length - 3)
+					return getRule("VierdeKim");					
+			}
 		}
-			
 
 		//4. Jack of clubs on Red Queen or vice versa (Joris)
 		if (cardId == 'J' && cardSuit == 'C' && (pileSuit == 'H' || pileSuit == 'D'))
 			return getRule("Joris");
 
 		//6. 6 on a Queen (Baudet)
-		if (cardId == '6' && hand.length > 1)
-			return getRule("Baudet");
+		if (cardId == '6'){
+			if(hand.length > 1)
+				return getRule("Baudet");
+			else
+				return getRule("BaudetFout");
+		} 
 	}
 
-	//4. Joris
+	//4. Joris Reverse
 	if (pileId == 'J' && pileSuit == 'C')
 	{
 		if (cardId == 'Q' && (cardSuit == 'H' || cardSuit == 'D'))
@@ -591,11 +590,11 @@ function checkCards(cardId, pileId, match, hand)
 
 function placeOnPile(cardId, pileId, match, hand)
 {
-	var res = checkCards(cardId, pileId, match, hand);
+	var card = hand[cardId];
+	var res = checkCards(card, pileId, match, hand);
 
 	if (res.value > 0)
 	{
-		var card = hand[cardId];
 		var pile = match.piles[pileId];
 
 		pile.cards.push(card);
@@ -608,6 +607,7 @@ function placeOnPile(cardId, pileId, match, hand)
 
 // Helper Functions
 
+// Hamming function for different size strings: find smallest match between strings.
 function HammingDistance(a, b){
 	// make sure a is smallest
 	a = a.toLowerCase();
@@ -631,6 +631,7 @@ function HammingDistance(a, b){
 	return minDist;
 }
 
+// return closest participant closest to name, maximum 3 difference
 function minHammingDistanceIndex(participants, name){
 	var names = participants.map(p => p.name);
 

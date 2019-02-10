@@ -225,8 +225,6 @@ function fritsCards(){
 }
 
 function vuileFritsCards() {
-	while(true)
-		var x = 5;
 	if(log) console.log("vuileFritsCards: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	if(match && match.state == 0){
@@ -526,11 +524,12 @@ function checkCards(card, pileId, match, hand)
 			for(var i = pile.cards.length - 1; i >= 0; i--){
 				var c = Identities[pile.cards[i].identity];
 				if (c != 'Q')
-					return getRule("Kim");
+					break;
 				
 				if(i <= pile.cards.length - 3)
 					return getRule("VierdeKim");					
 			}
+			return getRule("Kim");
 		}
 
 		//4. Jack of clubs on Red Queen or vice versa (Joris)

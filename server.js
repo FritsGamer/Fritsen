@@ -1,13 +1,19 @@
 ///// SETUP SERVER
 
 const express = require('express');
+const socket = require('socket.io');
+
+//App Setup
 const app = express();
+const server = app.listen(process.env.PORT || 9999, function() {
+	console.log("App listening on Port " + 9999);
+});
 
-app.use(express.static("public"));  // Staticly serve pages, using directory 'public' as root 
+//Static files
+app.use(express.static("public"));
 
-const server = app.listen(process.env.PORT || 9999);
-const io = require('socket.io')(server);
-console.log("Started server on port 9999");
+//Socket setup
+const io = socket(server);
 
 // GLOBAL DATA
 

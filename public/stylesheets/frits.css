@@ -1,3 +1,32 @@
+html{
+	font-family:sans-serif;
+	-webkit-text-size-adjust:100%;
+	-ms-text-size-adjust:100%
+}
+
+body{
+	margin: 0;
+}
+
+.table-image{
+  background-image: url("../images/Table.jpg");
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+}
+
+.board-image {
+  background-image: url("../images/Snijplank.png");
+  height: 60vh;
+  width: 90vh;
+  top: 18%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+  margin: auto;
+}
+
 #playerName {
 	display: block;
     position: absolute;
@@ -26,25 +55,6 @@
     left: 33%;
     height: 19%;
     width: 34%;
-}
-
-.table-image{
-  background-image: url("../images/Table.jpg");
-  height: 100vh;
-  background-repeat: no-repeat;
-  background-size: cover;
-  position: relative;
-}
-
-.board-image {
-  background-image: url("../images/Snijplank.png");
-  height: 60vh;
-  width: 90vh;
-  top: 18%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  position: relative;
-  margin: auto;
 }
 
 @media all and (orientation: portrait) {

@@ -2,10 +2,10 @@
   "name": "Fritsen",
   "description": "Drinking game where you have to frits a lot",
   "author": "Willem Vaandrager",
-  "version": "0.0.9",
+  "version": "0.1.9",
   "main": "server.js",
   "scripts": {
-    "start": "node pm2.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "~4.16.4",

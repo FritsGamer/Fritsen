@@ -1,17 +1,9 @@
-// This file manages the games client's logic. It's here that Socket.io connections are handled
-// and functions from canvas.js are used to manage the game's visual appearance.
 
 var socket = io();
 var canPlayCard = false;
 var canVuileFrits = true;
 var started = false;
 var timeOutId = false;
-
-function Rule(name, description, value) {
-  this.name = name;
-  this.description = description;
-  this.value = value;
-}
 
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result) {
 	showDeck(deck);

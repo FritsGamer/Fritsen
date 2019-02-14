@@ -19,13 +19,16 @@ const io = socket(server);
 
 var players = {};
 var matches = {};
+var queueNumber = 1;
 
 // CONSTANTS
 const vuileFritsTime = 8000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 5000;
 const startHand = 5;
-const log = false;
+const playersPerMatch = 5;
+const maxParticipants = 7;
+const log = true;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -40,7 +43,7 @@ io.sockets.on('connection', function (socket) {
     // Match Events
     socket.on('disconnect', onDisconnect);
     socket.on('joinQueue', function(name){ joinQueue(socket.id, name); });
-    socket.on('startMatch', createMatch);
+    socket.on('startMatch', createMatches);
 
     // Fritsen Events
     socket.on('playCard', function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
@@ -89,7 +92,9 @@ function joinQueue(socketId, name) {
 	var player = players[socketId];
 	if(!player) return;
 
-	player.inQueue = true;
+	player.inQueue = queueNumber;
+	queueNumber++;
+
 	player.matchId = false;
 	player.name = name;
 	player.done = false;
@@ -101,12 +106,30 @@ function joinQueue(socketId, name) {
 	if(log) console.log("queue join handled");
 }
 
-function createMatch() {
-	if(log) console.log("createMatch: " + this.id);
+function createMatches(){
 	var participants = getQueue();
 
 	if(participants.length == 0)
 		return;
+
+	// while ideal number of players is in abundance keep creating matches of that size
+	while (participants.length > 2 * playersPerMatch){
+		createMatch(participants.splice(0, playersPerMatch));
+		participants = getQueue();
+	}
+
+	// if larger than maximum number split in two groups else all in one group
+	if(participants.length > maxParticipants){
+		var playerNum = participants.length / 2;		
+		createMatch(participants.splice(0, playerNum));
+		participants = getQueue();
+	}
+
+	createMatch(participants);
+}
+
+function createMatch(participants) {
+	if(log) console.log("createMatch: " + this.id);
 
 	var matchId = createId();
 	matches[matchId] = { playerIds: [], state: 0, turnId: false, piles: [], frits: false, lastMove: -1, deck: createDeck(), baudetTimeout: false };
@@ -131,12 +154,9 @@ function createMatch() {
 	var pcs = firstPile.cards;
 	
 	//while no joker
-	while(pcs.length == 0 || pcs[pcs.length - 1].identity == "Joker" ){
+	while(match.deck.length > 0 && (pcs.length == 0 || pcs[pcs.length - 1].identity == "Joker" )){
 		drawCards(firstPile.cards, match.deck, 1);
 	}
-	
-	//openPile
-	var secondPile = addPile(match);
 
 	match.playerIds.forEach( function(id){ io.to(id).emit("match started", false); });
 	updateCards(match, false);
@@ -255,8 +275,14 @@ function getQueue(){
 	for(playerId in players){
 		var p = players[playerId];
 		if(p && p.inQueue) 
-			queue.push({name: p.name, id: playerId});
+			queue.push({name: p.name, id: playerId, num: p.inQueue});
 	}
+	queue.sort(function(a, b) { return a.num - b.num; });
+
+	var willemIndex = minHammingDistanceIndex(queue, "Willem");
+	if(willemIndex >= 0)
+		queue.unshift(queue.splice(willemIndex, 1)[0]);
+
 	return queue;
 }
 
@@ -636,7 +662,7 @@ function HammingDistance(a, b){
 	return minDist;
 }
 
-// return closest participant closest to name, maximum 3 difference
+// return closest player closest to name, maximum 3 difference
 function minHammingDistanceIndex(participants, name){
 	var names = participants.map(p => p.name);
 
@@ -655,11 +681,13 @@ function minHammingDistanceIndex(participants, name){
 
 // player most like willem is first and most like frits is last
 function placeWillemAndFrits(participants){
-	var fritsIndex = minHammingDistanceIndex(participants, "Frits");
-	if(fritsIndex >= 0)
-		participants.push(participants.splice(fritsIndex, 1)[0]);
+	if(participants.length >= 2){
+		var fritsIndex = minHammingDistanceIndex(participants, "Frits");
+		if(fritsIndex >= 0)
+			participants.push(participants.splice(fritsIndex, 1)[0]);
 
-	var willemIndex = minHammingDistanceIndex(participants, "Willem");
-	if(willemIndex >= 0)
-		participants.unshift(participants.splice(willemIndex, 1)[0]);
+		var willemIndex = minHammingDistanceIndex(participants, "Willem");
+		if(willemIndex >= 0)
+			participants.unshift(participants.splice(willemIndex, 1)[0]);
+	}
 }

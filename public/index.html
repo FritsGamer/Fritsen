@@ -22,9 +22,9 @@
 			<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
 			<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
 
-			<div id="waiting" class="queue">Waiting for other players...</div>
+			<div id="waiting" class="queue" hidden>Waiting for other players...</div>
 			<div id="players" class="queue"></div>
-			<button id="newgame" class="button queue" onclick="startMatch()"></button>
+			<button id="newgame" class="button" onclick="startMatch()" hidden></button>
 
 			<div id="status" class="message game"></div>
 			<div id="turn" class="message game"></div>
@@ -70,6 +70,7 @@
 				$("#status").empty();
 				$('.start').hide();
 				$('.queue').hide();
+				$('#newgame').hide();
 				$('.game').show();
 			}
 		</script>

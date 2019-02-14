@@ -32,10 +32,18 @@ socket.on("queue", function(players) {
 	queue.empty();
 	for(var i = 0; i < players.length; i++){
 		var player = players[i];
+		
+
 		var line = "<div>&gt; " + player.name + "</div>";
 		var p = $(line);
 		if(player.id == socket.id){		
 			p.addClass('ownname');
+			
+			if(i == 0)
+				$('#newgame').show();
+			else
+				$('#newgame').hide();
+				
 		}
 		queue.append(p);
 	}

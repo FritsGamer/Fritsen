@@ -113,23 +113,21 @@ function createMatches(){
 		return;
 
 	// while ideal number of players is in abundance keep creating matches of that size
-	while (participants.length > 2 * playersPerMatch){
+	while (participants.length > 2 * playersPerMatch){		
 		createMatch(participants.splice(0, playersPerMatch));
-		participants = getQueue();
 	}
 
 	// if larger than maximum number split in two groups else all in one group
 	if(participants.length > maxParticipants){
-		var playerNum = participants.length / 2;		
+		var playerNum = participants.length / 2;	
 		createMatch(participants.splice(0, playerNum));
-		participants = getQueue();
 	}
 
 	createMatch(participants);
 }
 
 function createMatch(participants) {
-	if(log) console.log("createMatch: " + this.id);
+	if(log) console.log("createMatch: " + participants.length);
 
 	var matchId = createId();
 	matches[matchId] = { playerIds: [], state: 0, turnId: false, piles: [], frits: false, lastMove: -1, deck: createDeck(), baudetTimeout: false };

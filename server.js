@@ -22,12 +22,11 @@ var matches = {};
 var queueNumber = 1;
 
 // CONSTANTS
-const vuileFritsTime = 8000;
+const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 5000;
 const startHand = 5;
-const playersPerMatch = 5;
-const maxParticipants = 7;
+const maxParticipants = 6;
 const log = true;
 
 
@@ -112,9 +111,9 @@ function createMatches(){
 	if(participants.length == 0)
 		return;
 
-	// while ideal number of players is in abundance keep creating matches of that size
-	while (participants.length > 2 * playersPerMatch){		
-		createMatch(participants.splice(0, playersPerMatch));
+	// while number of players is in abundance keep creating matches of max size
+	while (participants.length > 2 * maxParticipants){		
+		createMatch(participants.splice(0, maxParticipants));
 	}
 
 	// if larger than maximum number split in two groups else all in one group
@@ -160,8 +159,11 @@ function createMatch(participants) {
 	updateCards(match, false);
 
 	setTimeout(function(){
-		nextPlayer(match);
-		updateCards(match, getRule("Goed"));
+		var m = matches[matchId];
+		if(m){
+			nextPlayer(m);
+			updateCards(m, getRule("Goed"));
+		}
 	}, vuileFritsTime);
 	if(log) console.log("match created");
 }
@@ -297,6 +299,10 @@ function updateCards(match, result) {
 		var playerId = match.playerIds[i];
 		var player = players[playerId];
 		if(player){
+			if(!player.done && player.cards.length == 0){
+				player.done = true;
+				checkWin(match, player, getRule("LegeHand"));
+			}
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
 			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, turn, result);
 		}
@@ -382,7 +388,7 @@ function Card(identity, suit) {
 }
 
 function createDeck(){
-	var numJokers = 4;
+	var numJokers = 3;
 	var deck = [];
 	var suits = ["Clubs", "Hearts", "Spades", "Diamonds"]
 	suits.forEach(function(suit) {
@@ -477,6 +483,7 @@ var Rules = [
 	new Rule("JokerFout", "Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0),
 	new Rule("Uit", " is uitgefritsd. ", 1),
 	new Rule("VuileFrits", "Vuile Frits voor ", 0),
+	new Rule("LegeHand", "Er zijn te weinig kaarten in het spel.", 0),
 	new Rule("Disconnect", " heeft het spel verlaten", 0)
 ];
 

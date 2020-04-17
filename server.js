@@ -24,7 +24,7 @@ var queueNumber = 1;
 // CONSTANTS
 const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
-const baudetTime = 5000;
+const baudetTime = 10000;
 const startHand = 5;
 const maxParticipants = 6;
 const log = true;

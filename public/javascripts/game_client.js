@@ -32,11 +32,10 @@ socket.on("queue", function(players) {
 	queue.empty();
 	for(var i = 0; i < players.length; i++){
 		var player = players[i];
-		
 
-		var line = "<div>&gt; " + player.name + "</div>";
-		var p = $(line);
-		if(player.id == socket.id){		
+
+		var p = $("<div>").text('> '+player.name);
+		if(player.id == socket.id){
 			p.addClass('ownname');
 			
 			if(i == 0)

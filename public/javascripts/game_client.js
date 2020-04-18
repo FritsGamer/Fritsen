@@ -24,6 +24,11 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlay
 			}else
 				setTurn(turnPlayer, true);
 		}
+
+		// Vibrate when a card is played
+		if (window && window.navigator && typeof window.navigator.vibrate === 'function') {
+			window.navigator.vibrate(100);
+		}
 	}
 });
 

@@ -18,11 +18,10 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlay
 			canVuileFrits = false;
 
 			if(result.name == "Baudet"){
-				next = false;
-				setTurn(turnPlayer, false);
+				setTurn(turnPlayer, true);
 				$('#turn').text("Baudet");
 			}else
-				setTurn(turnPlayer, true);
+				setTurn(turnPlayer, false);
 		}
 
 		// Vibrate when a card is played
@@ -57,7 +56,7 @@ socket.on("match started", function(turnPlayer) {
 	canPlayCard = false;
 	canVuileFrits = true;
 	startGame();
-	setTurn(turnPlayer, true);
+	setTurn(turnPlayer, false);
 });
 
 
@@ -116,17 +115,17 @@ function setMessage(msg){
 	}, 3000);
 }
 
-function setTurn(player, next){
+function setTurn(player, baudet){
 	var turnField = $('#turn');
 	if(!player){
 		turnField.text("Iedereen mag nu vuile fritsen");
 		return;
 	}
 
-	if(socket.id === player.id)
-		canPlayCard = next;
+	if(baudet)
+		canPlayCard = true;
 	else
-		canPlayCard = !next;
+		canPlayCard = socket.id === player.id;
 	
 
 	if(canPlayCard){

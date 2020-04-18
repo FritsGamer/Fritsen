@@ -183,7 +183,7 @@ function playCard(socketId, cardId, pileId) {
 	if(cardId >= hand.length || pileId >= piles.length)
 		return updateCards(match, getRule("Fout"));
 
-	if((match.state != 2 && match.turnId != socketId) || (match.state == 2 && match.turnId == socketId))
+	if((match.state != 2 && match.turnId != socketId))
 		return updateCards(match, getRule("Fout"));
 
 	var result = placeOnPile(cardId, pileId, match, hand);
@@ -475,6 +475,7 @@ var Rules = [
 	new Rule("Baudet", "Baudet: Ruil je hand met de stapel en neem 2 fritsjes", 1),
 	new Rule("BaudetFout", "Je kunt niet uitkomen met Baudet, neem 1 fritsje", 0),
 	new Rule("Klaver", "Klaver! Je voorkomt dat Thierry aan de macht komt. De speler met Baudet mag niet ruilen", 1),
+	new Rule("Erik", "Erikje! Je hebt jezelf geklaverd! neem zelf nog wel 2 fritsjes voor het spelen van Baudet", 1),
 	new Rule("KlaverFout", "Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0),
 	new Rule("DubbelNegen", "Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1),
 	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1),
@@ -511,7 +512,12 @@ function checkCards(card, pileId, match, hand)
 	//   first check as all other moves should be rejected during the baudetTimeout
 	if(match.state == 2){
 		if(card.identity == 3 && card.suit == "Clubs" && match.lastMove == pileId)
-			return getRule("Klaver");
+		{
+			if(match.turnId == socketId)
+				return getRule("Erik");
+			else
+				return getRule("Klaver");
+		}
 		else
 			return getRule("KlaverFout");
 	}

@@ -18,8 +18,8 @@ body{
 
 .board-image {
   background-image: url("../images/Snijplank.png");
-  height: 60vh;
-  width: 90vh;
+  height: 60vmin;
+  width: 90vmin;
   top: 18%;
   background-repeat: no-repeat;
   background-size: cover;
@@ -36,7 +36,7 @@ body{
     width: 46%;
     text-align: center;
     height: 12%;
-    font-size: 6vh;
+    font-size: 6vmin;
     color: white;
 }
 
@@ -55,13 +55,6 @@ body{
     left: 33%;
     height: 19%;
     width: 34%;
-}
-
-@media all and (orientation: portrait) {
-  .board-image {
-    height: 60vw;
-    width: 90vw;
-  }
 }
 
 .cardblock{
@@ -100,13 +93,17 @@ body{
   left: 6%;
 }
 
+.pile.lastmove {
+  box-shadow: 0 0 0.6vmin 0.3vmin green;
+}
+
 .active {
-  outline: 0.4vh solid blue;
+  box-shadow: 0 0 0.6vmin 0.3vmin blue;
 }
 
 .pile.empty.active {
   display: block;
-  outline: none;
+  box-shadow: none;
   background: rgba(255,255,255,0.3);
 }
 
@@ -120,8 +117,14 @@ body{
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 4vh;
+  font-size: 4vmin;
   color: darkgrey;
+}
+@media all and (orientation: portrait) {
+  .message {
+    left: 0vw;
+    width: 100%;
+  }
 }
 
 #turn {
@@ -136,7 +139,7 @@ body{
   width: 100%;
   position: relative;
   text-align: center;
-  font-size: 7vh;
+  font-size: 7vmin;
   color: white;
 }
 
@@ -146,37 +149,12 @@ body{
   width: 80%;
   position: absolute;
   text-align: left;
-  font-size: 6vh;
+  font-size: 6vmin;
   color: white;
 }
 
 .ownname{
-  color: red;	
-}
-
-
-@media all and (orientation: portrait) {
-  .message {
-    font-size: 4vw;
-    left: 0vw;
-    width: 100%;
-  }
-
-  #playerName {
-	font-size: 6vw;
-  }
-
-  #waiting{
-	font-size: 7vw;
-  }
-
-  #players{ 
-	font-size: 6vw;  	
-  }
-
-  .active {
-    outline: 0.4vw solid blue;
-  }
+  color: red;
 }
 
 .button {

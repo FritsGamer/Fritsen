@@ -27,7 +27,7 @@ const vuileFritsTimeout = 2000;
 const baudetTime = 10000;
 const startHand = 5;
 const maxParticipants = 6;
-const log = true;
+const log = false;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -186,7 +186,7 @@ function playCard(socketId, cardId, pileId) {
 	if((match.state != 2 && match.turnId != socketId))
 		return updateCards(match, getRule("Fout"));
 
-	var result = placeOnPile(cardId, pileId, match, hand);
+	var result = placeOnPile(cardId, pileId, match, hand, socketId);
 
 	//valid move
 	if (result.value > 0) {
@@ -489,6 +489,7 @@ var Rules = [
 ];
 
 function getRule(name) {
+	if(log) console.log("got rule" + name);
 	return Rules.find(function(r) { return r.name == name; });
 }
 
@@ -506,7 +507,7 @@ function getRule(name) {
 //11. All same suit: King + Ace on Queen - Not implemented
 
 
-function checkCards(card, pileId, match, hand)
+function checkCards(card, pileId, match, hand, socketId)
 {	
     //7. 3 of Clubs on the last 6, when baudet is executed (Klaver) 
 	//   first check as all other moves should be rejected during the baudetTimeout
@@ -630,10 +631,10 @@ function checkCards(card, pileId, match, hand)
 	return getRule("Fout");
 }
 
-function placeOnPile(cardId, pileId, match, hand)
+function placeOnPile(cardId, pileId, match, hand, socketId)
 {
 	var card = hand[cardId];
-	var res = checkCards(card, pileId, match, hand);
+	var res = checkCards(card, pileId, match, hand, socketId);
 
 	if (res.value > 0)
 	{

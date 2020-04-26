@@ -108,7 +108,7 @@ function joinQueue(socketId, name) {
 function createMatches(){
 	var participants = getQueue();
 
-	if(participants.length == 0)
+	if(participants.length == 0 || this.id !== participants[0]["id"])
 		return;
 
 	// while number of players is in abundance keep creating matches of max size

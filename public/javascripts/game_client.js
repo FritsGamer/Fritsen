@@ -4,12 +4,22 @@ var canPlayCard = false;
 var canVuileFrits = true;
 var started = false;
 var timeOutId = false;
+var localAchievements = [];
+var showingAchievements = false;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result) {
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result, achievements) {
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
 	
+	if (achievements && achievements.length > 0) {
+		achievements.forEach((achievement) => {
+			localAchievements.push(achievement);
+		})
+
+		showAchievement();
+	}
+
 	if(result){
 		if(result.value < 2) setMessage(result.description);
 		
@@ -142,4 +152,21 @@ function playCard(card, pile) {
 	if (canPlayCard && Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
 		socket.emit("playCard", cardNum, pileNum);
 	}
+}
+
+function showAchievement() {
+	if (!showingAchievements && localAchievements.length > 0) {
+		var achievement = localAchievements.shift();
+
+		$('#achievement-by').text(achievement.by);
+		$('#achievement-text').text(achievement.text);
+		$('#achievement-container').fadeIn();
+
+		setTimeout(function(){ 
+			$('#achievement-container').fadeOut(500, () => {
+				showingAchievements = false;
+				showAchievement()
+			})
+		}, 2500);
+	} 
 }

@@ -18,21 +18,29 @@
 
 	<body>
 		<div class="table-image">
-		  <div class="board-image">
-			<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
-			<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
+			
+			<div class="board-image">
+				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
+				<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
 
-			<div id="waiting" class="queue" hidden>Waiting for other players...</div>
-			<div id="players" class="queue"></div>
-			<button id="newgame" class="button" onclick="startMatch()" hidden></button>
+				<div id="waiting" class="queue" hidden>Waiting for other players...</div>
+				<div id="players" class="queue"></div>
+				<button id="newgame" class="button" onclick="startMatch()" hidden></button>
 
-			<div id="status" class="message game"></div>
-			<div id="turn" class="message game"></div>
-			<button id="vuilefrits" class="button game" onclick="vuileFrits()"></button>	
-			<div id="deck" class="cardblock game" onclick="frits()"></div>
-			<div id="piles" class="game"></div>
-			<div id="hand" class="game"></div>
-		  </div>
+				<div id="status" class="message game"></div>
+				<div id="turn" class="message game"></div>
+				<button id="vuilefrits" class="button game" onclick="vuileFrits()"></button>	
+				<div id="deck" class="cardblock game" onclick="frits()"></div>
+				<div id="piles" class="game"></div>
+				<div id="hand" class="game"></div>
+			<div id="achievement-container">
+				<div class="star" id="star-top-left">★</div>
+				<div class="star" id="star-top-right">★</div>
+				<div class="star" id="star-bottom-left">★</div>
+				<div class="star" id="star-bottom-right">★</div>
+				<div id="achievement-by"></div>
+				<div id="achievement-text"></div>
+			</div>
 		</div>
 		
 		<script src="https://code.jquery.com/jquery-2.2.2.min.js" integrity="sha256-36cp2Co+/62rEAAYHLmRCPIych47CvdM+uTBJwSzWjI=" crossorigin="anonymous"></script>

@@ -155,7 +155,7 @@ function createMatch(participants) {
 		drawCards(firstPile.cards, match.deck, 1);
 	}
 
-	match.playerIds.forEach( function(id){ io.to(id).emit("match started", false); });
+	match.playerIds.forEach( function(id){ io.to(id).emit("match started"); });
 	updateCards(match, false);
 
 	setTimeout(function(){
@@ -184,7 +184,7 @@ function playCard(socketId, cardId, pileId) {
 		return updateCards(match, getRule("Fout"));
 
 	if((match.state != 2 && match.turnId != socketId))
-		return updateCards(match, getRule("Fout"));
+		return updateCards(match, getRule("DesBeurt"));
 
 	var result = placeOnPile(cardId, pileId, match, hand, socketId);
 
@@ -246,6 +246,12 @@ function fritsCards(){
 			var result = new Rule(rule.name, player.name + rule.description, rule.value);
 			updateCards(match, result);
 		}
+	}else{
+		if (match.turnId == this.id){
+			return updateCards(match, getRule("Fout"));			
+		} else {
+			return updateCards(match, getRule("DesBeurt"));			
+		}		
 	}
 	if(log) console.log("fritsCards handled");
 }
@@ -304,7 +310,7 @@ function updateCards(match, result) {
 				checkWin(match, player, getRule("LegeHand"));
 			}
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
-			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, turn, result);
+			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result);
 		}
 	}
 	if(log) console.log("updated cards");	
@@ -462,6 +468,7 @@ function Rule(name, description, value) {
 }
 
 var Rules = [
+	new Rule("DesBeurt", "Fritsje des: Je bent niet aan de beurt", 0),
 	new Rule("Fout", "Fritsje des: Zet is niet mogelijk, neem 1 fritsje", 0),
 	new Rule("Goed", "", 2),
 	new Rule("Soepel", "Soepele Frits", 1),

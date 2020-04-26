@@ -1,11 +1,10 @@
 
 var socket = io();
-var canPlayCard = false;
 var canVuileFrits = true;
 var started = false;
 var timeOutId = false;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result) {
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, result) {
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
@@ -15,13 +14,10 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlay
 		
 		if(result.value > 0){
 			$("#vuilefrits").hide();
-			canVuileFrits = false;
 
 			if(result.name == "Baudet"){
-				setTurn(turnPlayer, true);
 				$('#turn').text("Baudet");
-			}else
-				setTurn(turnPlayer, false);
+			}
 		}
 
 		// Vibrate when a card is played
@@ -52,11 +48,9 @@ socket.on("queue", function(players) {
 	}
 });
 
-socket.on("match started", function(turnPlayer) {
-	canPlayCard = false;
+socket.on("match started", function() {
 	canVuileFrits = true;
 	startGame();
-	setTurn(turnPlayer, false);
 });
 
 
@@ -79,9 +73,7 @@ function enterQueue(name){
 }
 
 function frits() {
-	if (canPlayCard){
-		socket.emit("frits");
-	}
+	socket.emit("frits");
 }
 
 function vuileFrits() {
@@ -115,31 +107,10 @@ function setMessage(msg){
 	}, 3000);
 }
 
-function setTurn(player, baudet){
-	var turnField = $('#turn');
-	if(!player){
-		turnField.text("Iedereen mag nu vuile fritsen");
-		return;
-	}
-
-	if(baudet)
-		canPlayCard = true;
-	else
-		canPlayCard = socket.id === player.id;
-	
-
-	if(canPlayCard){
-		turnField.text("Het is jouw beurt!");
-	}else{
-		var numCards = player.cards == 1 ? "laatste frits!" :  ("nog " + player.cards + " kaarten");
-		turnField.text(player.name + " is aan de beurt en heeft " + numCards);
-	}
-}
-
 function playCard(card, pile) {	
 	var cardNum = parseInt(card.replace(/\D/g,''));
 	var pileNum = parseInt(pile.replace(/\D/g,''));
-	if (canPlayCard && Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
+	if (Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
 		socket.emit("playCard", cardNum, pileNum);
 	}
 }

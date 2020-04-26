@@ -256,12 +256,19 @@ function fritsCards(){
 		match.frits = true;	
 
 		//add new pile if no pile is empty
-		if (match.piles[match.piles.length - 1].cards.length > 0)
+		if (match.piles[match.piles.length - 1].cards.length > 0) {
 			addPile(match);
-
+		}
+		
 		var result = getRule("Frits", player.name);
+
+		if (!player.fritsCount) {
+			player.fritsCount = 0
+		}
+
+		player.fritsCount++
 		updateCards(match, result);
-	}else{
+	} else {
 		if (match.turnId !== this.id && match.state !== "baudet"){
 			return updateCards(match, getRule("DesBeurt", player.name));			
 		} else if (match.turnId === this.id && match.frits) {
@@ -270,7 +277,9 @@ function fritsCards(){
 			return updateCards(match, getRule("Fout", player.name));	
 		}
 	}
-	if(log) console.log("fritsCards handled");
+	if(log) {
+		console.log("fritsCards handled");
+	}
 }
 
 function vuileFritsCards() {
@@ -332,7 +341,8 @@ function updateCards(match, result) {
 		piles.push(asStrings);
 	}
 
-	var turn = getTurnPlayer(match);
+	var turnPlayer = getTurnPlayer(match);
+	var achievements = getAchievements(match, turnPlayer)
 
 	for (var i = 0; i < match.playerIds.length; i++) {
 		var playerId = match.playerIds[i];
@@ -343,10 +353,172 @@ function updateCards(match, result) {
 				checkWin(match, player, getRule("Uit", player.name));
 			}
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
-			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result);
+			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, achievements);
 		}
 	}
 	if(log) console.log("updated cards");	
+}
+
+function getAchievements(match, turnPlayer) {
+	if (match.frits) {
+		return [];
+	}
+	
+	var piles = match.piles;
+	var newAchievements = []
+
+	// Gouden / Zilveren / Bronzen Frits
+	if (players[match.turnId]) {
+		var player = players[match.turnId];
+
+		if (player.cards.length === 0) {
+			if (!player.fritsCount) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Gouden Frits',
+				})
+			} else if (!player.fritsCount === 1) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Zilveren Frits',
+				})
+			} else if (player.fritsCount === 2) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Bronzen Frits',
+				})
+			}
+		}
+	}
+
+	// Tactical Start
+	if (piles.length === 2 && piles[1].cards.length === 2) {
+		var currentPile = piles[1].cards;
+
+		if ((currentPile[1].identity - currentPile[0].identity) > 9) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Tactical Start'
+				
+			})
+		} 
+	} else 	if (match.lastMove && piles[match.lastMove]) { // Tactical Frits
+		var currentPile = piles[match.lastMove].cards;
+		var size = currentPile.length;
+
+		if (size >= 2 && (currentPile[size -1].identity - currentPile[size - 2].identity) > 9) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Tactical Frits'
+			})
+		} 
+	}
+
+	// Offer Start
+	if (piles.length === 2 && piles[1].cards.length === 2) {
+		var currentPile = piles[1].cards;
+
+		if ((currentPile[0].identity - currentPile[1].identity) === 1) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Offer Start'
+			})
+		} 
+	}
+
+	// Soepele Start
+	if (piles.length === 2 && piles[1].cards.length === 2) {
+		var currentPile = piles[1].cards;
+
+		if ((currentPile[1].identity - currentPile[0].identity) === 1) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Soepele Start'
+			})
+		} 
+	} else if (match.lastMove && piles[match.lastMove]) { // Soepele Frits
+		var currentPile = piles[match.lastMove].cards;
+		var size = currentPile.length;
+
+		if (size >= 2 && (currentPile[size -1].identity - currentPile[size - 2].identity) === 1) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Soepele Frits'
+			})
+		} 
+	}
+
+	// Kartelfrits
+	if (match.lastMove && piles[match.lastMove]) {
+		var currentPile = piles[match.lastMove].cards;
+
+		if (size >= 2 && currentPile[size - 1].identity !== 6 && currentPile[size - 2].identity === 12) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Kartelfrits'
+			})
+		} 
+	}
+
+	// Lavendelfrits
+	if (match.lastMove && piles[match.lastMove]) {
+		var currentPile = piles[match.lastMove].cards;
+		var size = currentPile.length;
+
+		if (size >= 2 && currentPile[size - 1].identity !== 12 && currentPile[size - 2].identity === 6) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Lavendelfrits'
+			})
+		} 
+	}
+
+	// Eerste Kim
+	if (match.lastMove && piles[match.lastMove]) {
+		var counterKim = 0;
+		piles.forEach((pile) => {
+			pile.cards.forEach((card) => {
+				if (card.identity === 12) {
+					counterKim++;
+				}
+			})
+		})
+
+		var currentPile = piles[match.lastMove].cards;
+		var size = currentPile.length;
+
+		if (counterKim === 1 && currentPile[size - 1].identity === 12) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Eerste Kim'
+			})
+		} 
+	}
+
+	// Eerste Frits
+	if (match.lastMove && piles[match.lastMove]) {
+		var counterFrits = 0;
+		piles.forEach((pile) => {
+			pile.cards.forEach((card) => {
+				if (card.identity === 13) {
+					counterFrits++;
+				}
+			})
+		})
+
+		var currentPile = piles[match.lastMove].cards;
+		var size = currentPile.length;
+
+		if (counterFrits === 1 && currentPile[size - 1].identity === 13) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Eerste Frits',
+				duration: 2000
+			})
+		} 
+	}
+
+	return newAchievements
 }
 
 function getTurnPlayer(match){

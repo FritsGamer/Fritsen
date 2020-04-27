@@ -173,6 +173,44 @@ body{
   background: rgba(255,255,255,0.3);
 }
 
+#notifications-container {
+  position: absolute;
+  top: 1vmin;
+  left: 1vmin;
+  right: 1vmin;
+  display: flex;
+  justify-content: start;
+  flex-direction: column;
+}
+
+.notification {
+  position: relative;
+  padding: 1.5vmin;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  background-color: #00000088;
+  border-radius: 2vmin;
+  margin-bottom: 1vmin;
+}
+.notification-text {
+  flex: 1;
+  color: white;
+  font-size: 4vmin;
+  display: flex;
+  align-items: center;
+}
+
+.notification-count {
+  width: 10vmin;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  font-size: 4vmin;
+  align-items: center;
+  justify-content: center;
+}
+
 .message {
   top: -28%;
   left: -5%;

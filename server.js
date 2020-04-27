@@ -363,7 +363,7 @@ function getAchievements(match, turnPlayer) {
 	if (match.frits) {
 		return [];
 	}
-
+	
 	var piles = match.piles;
 	var newAchievements = []
 
@@ -824,18 +824,20 @@ function checkCards(card, pileId, match, hand, socketId, player)
 		var pid = top.identity;
 
 		//8. Same suit with higher value
-		if (cid > pid)
-		{
+		if (cid > pid) {
 			return getRule("Goed", player.name);
 		}
 
 		//9. Same suit with 1 lower value (Offer)
-		if (cid === pid - 1)
+		if (cid === pid - 1) {
 			return getRule("Offer", player.name);
+		}
 
 		//10. Same suit with 2 on Ace
-		if (cardId === '2' && pileId === 'A')
+		if (cardId === '2' && pileId === 'A') {
 			return getRule("Goed", player.name);
+		}
+			
 	}
 
 	return getRule("Fout", player.name);
@@ -875,11 +877,13 @@ function HammingDistance(a, b){
 	for (var i = 0; i <= diff; i++){
 		var dist = diff;
 		for (var j = 0; j < a.length; j++){
-			if(a[j] !== b[(j+i)])
+			if(a[j] !== b[(j+i)]) {
 				dist++;
+			}
 		}
-		if(dist < minDist)
+		if(dist < minDist) {
 			minDist = dist;
+		}
 	}
 	return minDist;
 }
@@ -905,11 +909,13 @@ function minHammingDistanceIndex(participants, name){
 function placeWillemAndFrits(participants){
 	if(participants.length >= 2){
 		var fritsIndex = minHammingDistanceIndex(participants, "Frits");
-		if(fritsIndex >= 0)
+		if(fritsIndex >= 0) {
 			participants.push(participants.splice(fritsIndex, 1)[0]);
-
+		}
+			
 		var willemIndex = minHammingDistanceIndex(participants, "Willem");
-		if(willemIndex >= 0)
+		if(willemIndex >= 0) {
 			participants.unshift(participants.splice(willemIndex, 1)[0]);
+		}
 	}
 }

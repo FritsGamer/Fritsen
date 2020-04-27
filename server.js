@@ -514,7 +514,6 @@ function getAchievements(match) {
 function nextPlayer(match){	
 	var index = match.playerIds.indexOf(match.turnId);
 
-	var next = (index + 1) % match.playerIds.length;
 	var next = (index + 1) % match.playerIds.length;	
 	match.turnId = match.playerIds[next];
 	

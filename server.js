@@ -226,7 +226,9 @@ function playCard(socketId, cardId, pileId) {
 				nextPlayer(match);
 				updateCards(match, getRule("Update", false));
 			}, baudetTime);
-		} else {			
+		} else {
+			var achievements = getAchievements(match)
+
 			nextPlayer(match);
 					
 			if(result.value === 1){
@@ -239,7 +241,7 @@ function playCard(socketId, cardId, pileId) {
 		}
 	}
 	
-	return updateCards(match, result);
+	return updateCards(match, result, achievements);
 }
 
 function fritsCards(){
@@ -256,12 +258,19 @@ function fritsCards(){
 		match.frits = true;	
 
 		//add new pile if no pile is empty
-		if (match.piles[match.piles.length - 1].cards.length > 0)
+		if (match.piles[match.piles.length - 1].cards.length > 0) {
 			addPile(match);
-
+		}
+		
 		var result = getRule("Frits", player.name);
+		// TODO switch to turnCount...
+		if (!player.fritsCount) {
+			player.fritsCount = 0
+		}
+
+		player.fritsCount++
 		updateCards(match, result);
-	}else{
+	} else {
 		if (match.turnId !== this.id && match.state !== "baudet"){
 			return updateCards(match, getRule("DesBeurt", player.name));			
 		} else if (match.turnId === this.id && match.frits) {
@@ -270,7 +279,9 @@ function fritsCards(){
 			return updateCards(match, getRule("Fout", player.name));	
 		}
 	}
-	if(log) console.log("fritsCards handled");
+	if(log) {
+		console.log("fritsCards handled");
+	}
 }
 
 function vuileFritsCards() {
@@ -325,14 +336,12 @@ function getQueue(){
 	return queue;
 }
 
-function updateCards(match, result) {
+function updateCards(match, result, achievements) {
 	var piles = [];
 	for (var i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
 		piles.push(asStrings);
 	}
-
-	var turn = getTurnPlayer(match);
 
 	for (var i = 0; i < match.playerIds.length; i++) {
 		var playerId = match.playerIds[i];
@@ -343,10 +352,131 @@ function updateCards(match, result) {
 				checkWin(match, player, getRule("Uit", player.name));
 			}
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
-			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result);
+			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, achievements);
 		}
 	}
 	if(log) console.log("updated cards");	
+}
+
+function getAchievements(match) {	
+	var turnPlayer = getTurnPlayer(match);
+	var piles = match.piles;
+	var newAchievements = []
+
+	if (!match.lastMove || match.lastMove < 0) {
+		return [];
+	}
+
+	var currentPile = piles[match.lastMove]
+
+	// Gouden / Zilveren / Bronzen Frits
+	if (players[turnPlayer]) {
+		var player = players[turnPlayer];
+
+		if (player.cards.length === 0) {
+			if (!player.fritsCount) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Gouden Frits',
+				})
+			} else if (!player.fritsCount === 1) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Zilveren Frits',
+				})
+			} else if (player.fritsCount === 2) {
+				newAchievements.push({
+					by: turnPlayer.name,
+					text: 'Bronzen Frits',
+				})
+			}
+		}
+	}
+
+	var ids = currentPile.cards.map((pile) => pile.identity);
+	var suits = currentPile.cards.map((pile) => pile.suit);
+	var size = ids.length;
+	
+	if (size < 1) {
+		return newAchievements;
+	}
+
+	var counterKim = 0;
+	piles.forEach((pile) => {
+		pile.cards.forEach((card) => {
+			if (card.identity === 12) {
+				counterKim++;
+			}
+		})
+	})
+
+	if (counterKim === 1 && ids[size - 1] === 12) {
+		newAchievements.push({
+			by: turnPlayer.name,
+			text: 'Eerste Kim'
+		})
+	} 
+
+	if (size < 2) {
+		return newAchievements;
+	}
+
+	var isStart = piles.length === 2 && size === 2
+	var diff = ids[size - 1] - ids[size - 2];
+
+	if (diff > 9 && suits[size - 2] === suits[size - 1]) {
+		if (isStart) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Tactical Start'
+			})
+		} else {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Tactical Frits'
+			})
+		}
+	} else if (diff === 1 && suits[size - 2] === suits[size - 1]) {
+		if (isStart) {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Soepele Start'
+			})
+		} else {
+			newAchievements.push({
+				by: turnPlayer.name,
+				text: 'Soepele Frits'
+			})
+		}
+	} else if (diff === -1 && suits[size - 2] === suits[size - 1]) {
+		newAchievements.push({
+			by: turnPlayer.name,
+			text: 'Offer Start'
+		})
+	} 
+		
+	if (ids[size - 2] !== 12 && 
+		ids[size - 1] === 6
+	) {
+		newAchievements.push({
+			by: turnPlayer.name,
+			text: 'Lavendelfrits'
+		})
+	} 
+
+	if (size >= 4 && 
+		ids[size - 1] === 12 && 
+		ids[size - 2] === 12 && 
+		ids[size - 3] === 12 &&
+		ids[size - 4] === 12 
+	) {
+		newAchievements.push({
+			by: turnPlayer.name,
+			text: 'Vierde Kim',
+		})
+	}
+
+	return newAchievements;
 }
 
 function getTurnPlayer(match){
@@ -655,18 +785,20 @@ function checkCards(card, pileId, match, hand, socketId, player)
 		var pid = top.identity;
 
 		//8. Same suit with higher value
-		if (cid > pid)
-		{
+		if (cid > pid) {
 			return getRule("Goed", player.name);
 		}
 
 		//9. Same suit with 1 lower value (Offer)
-		if (cid === pid - 1)
+		if (cid === pid - 1) {
 			return getRule("Offer", player.name);
+		}
 
 		//10. Same suit with 2 on Ace
-		if (cardId === '2' && pileId === 'A')
+		if (cardId === '2' && pileId === 'A') {
 			return getRule("Goed", player.name);
+		}
+			
 	}
 
 	return getRule("Fout", player.name);
@@ -706,11 +838,13 @@ function HammingDistance(a, b){
 	for (var i = 0; i <= diff; i++){
 		var dist = diff;
 		for (var j = 0; j < a.length; j++){
-			if(a[j] !== b[(j+i)])
+			if(a[j] !== b[(j+i)]) {
 				dist++;
+			}
 		}
-		if(dist < minDist)
+		if(dist < minDist) {
 			minDist = dist;
+		}
 	}
 	return minDist;
 }
@@ -736,11 +870,13 @@ function minHammingDistanceIndex(participants, name){
 function placeWillemAndFrits(participants){
 	if(participants.length >= 2){
 		var fritsIndex = minHammingDistanceIndex(participants, "Frits");
-		if(fritsIndex >= 0)
+		if(fritsIndex >= 0) {
 			participants.push(participants.splice(fritsIndex, 1)[0]);
-
+		}
+			
 		var willemIndex = minHammingDistanceIndex(participants, "Willem");
-		if(willemIndex >= 0)
+		if(willemIndex >= 0) {
 			participants.unshift(participants.splice(willemIndex, 1)[0]);
+		}
 	}
 }

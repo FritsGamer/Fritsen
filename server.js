@@ -70,7 +70,7 @@ function onDisconnect(){
 				if(p) p.done = true; 
 			});
 			player.done = false;
-			var rule = getRule("Disconnect", player.name);
+			var result = getRule("Disconnect", player.name);
 			checkWin(match, player, result);
 		}
 	} else if (player.inQueue){

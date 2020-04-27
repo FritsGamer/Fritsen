@@ -107,6 +107,10 @@ function startMatch() {
 	socket.emit("startMatch");
 }
 
+function playersNames() {
+	socket.emit("playersNames");
+}
+
 function setMessage(msg){
 	var message = $('#status');
 	message.text(msg);

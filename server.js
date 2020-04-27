@@ -196,8 +196,6 @@ function playCard(socketId, cardId, pileId) {
 
 	//valid move
 	if (result.value > 0) {
-		var achievements = getAchievements(match)
-
 		//Remove player when he has no cards left
 		if(hand.length === 0) {
 			player.done = true;
@@ -228,7 +226,9 @@ function playCard(socketId, cardId, pileId) {
 				nextPlayer(match);
 				updateCards(match, getRule("Update", false));
 			}, baudetTime);
-		} else {			
+		} else {
+			var achievements = getAchievements(match)
+
 			nextPlayer(match);
 					
 			if(result.value === 1){
@@ -358,11 +358,7 @@ function updateCards(match, result, achievements) {
 	if(log) console.log("updated cards");	
 }
 
-function getAchievements(match) {
-	if (match.frits) {
-		return [];
-	}
-	
+function getAchievements(match) {	
 	var turnPlayer = getTurnPlayer(match);
 	var piles = match.piles;
 	var newAchievements = []

@@ -24,8 +24,6 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 		showAchievement();
 	}
 
-	showTimeout(9000, "Fritspauze");
-
 	if(result){
 		queueMessage(result.description, timeout);
 

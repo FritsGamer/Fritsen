@@ -28,7 +28,7 @@ const drinkTimeOut = 10000;
 const disconnectTimeout = 20000;
 const startHand = 5;
 const maxParticipants = 6;
-const log = false;
+const log = true;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -104,6 +104,7 @@ function joinQueue(socketId, name) {
 	for(matchId in matches){
 		var match = matches[matchId];
 		var disconnectId = "";
+		console.log(match.playerIds);
 		
 		if(match.state === "disconnect"){	
 			for (playerId in players) {
@@ -114,8 +115,14 @@ function joinQueue(socketId, name) {
 					match.state = match.prevState;
 					var index = match.playerIds.indexOf(playerId);
 					
-					match.playerIds.splice(index, 0);
-					match.playerIds.splice(index, 0, socketId);		
+					delete match.playerIds[index];
+					match.playerIds.splice(index, 0, socketId);
+					
+					match.playerIds = match.playerIds.filter(function (el) {
+					  return el != null;
+					});
+					
+					console.log(match.playerIds);
 					
 					if(match.turnId === playerId){
 						match.turnId = socketId;
@@ -508,9 +515,11 @@ function nextPlayer(match){
 	var index = match.playerIds.indexOf(match.turnId);
 
 	var next = (index + 1) % match.playerIds.length;
+	var next = (index + 1) % match.playerIds.length;	
 	match.turnId = match.playerIds[next];
-
+	
 	var p = players[match.turnId];
+	
 	if (p.done) {
 		nextPlayer(match);
 	} else {
@@ -676,7 +685,7 @@ var Rules = [
 ];
 
 function getRule(name, playerName) {
-	if(log) console.log("got rule" + name + " by " + playerName);
+	if(log) console.log("got rule " + name + " by " + playerName);
 	var rule = Rules.find(function(r) { return r.name === name; });
 	
 	if(playerName){

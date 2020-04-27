@@ -196,6 +196,8 @@ function playCard(socketId, cardId, pileId) {
 
 	//valid move
 	if (result.value > 0) {
+		var achievements = getAchievements(match)
+
 		//Remove player when he has no cards left
 		if(hand.length === 0) {
 			player.done = true;
@@ -239,7 +241,7 @@ function playCard(socketId, cardId, pileId) {
 		}
 	}
 	
-	return updateCards(match, result);
+	return updateCards(match, result, achievements);
 }
 
 function fritsCards(){
@@ -334,15 +336,12 @@ function getQueue(){
 	return queue;
 }
 
-function updateCards(match, result) {
+function updateCards(match, result, achievements) {
 	var piles = [];
 	for (var i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
 		piles.push(asStrings);
 	}
-
-	var turnPlayer = getTurnPlayer(match);
-	var achievements = getAchievements(match, turnPlayer)
 
 	for (var i = 0; i < match.playerIds.length; i++) {
 		var playerId = match.playerIds[i];
@@ -359,11 +358,12 @@ function updateCards(match, result) {
 	if(log) console.log("updated cards");	
 }
 
-function getAchievements(match, turnPlayer) {
+function getAchievements(match) {
 	if (match.frits) {
 		return [];
 	}
 	
+	var turnPlayer = getTurnPlayer(match);
 	var piles = match.piles;
 	var newAchievements = []
 

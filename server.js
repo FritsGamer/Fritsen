@@ -448,7 +448,7 @@ function getAchievements(match) {
 				text: 'Soepele Frits'
 			})
 		}
-	} else if (diff === -1 && suits[size - 2] === suits[size - 1]) {
+	} else if (isStart && diff === -1 && suits[size - 2] === suits[size - 1]) {
 		newAchievements.push({
 			by: turnPlayer.name,
 			text: 'Offer Start'

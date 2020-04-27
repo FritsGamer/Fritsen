@@ -27,15 +27,19 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 
 			if(result.name === "Baudet"){
 				$('#turn').text("Baudet");
-			} else {				
+			} else {		
 				$('#turn').text("");
+				
+				if(result.value === 1 && timeout > 0){
+					showDrinkTimeout(timeout);
+				}		
 			}
 		}
 
 		// Vibrate when a card is played
 		if (window && window.navigator && typeof window.navigator.vibrate === 'function') {
 			window.navigator.vibrate(100);
-		}
+		}		
 	}
 });
 
@@ -62,6 +66,7 @@ socket.on("queue", function(players) {
 
 socket.on("match started", function() {
 	canVuileFrits = true;
+	$('#turn').text("Iedereen mag nu vuile fritsen");
 	startGame();
 });
 
@@ -149,4 +154,13 @@ function showAchievement() {
 			})
 		}, 2500);
 	} 
+}
+
+function showDrinkTimeout(timeout) {
+	$('#timeout-text').text("Fritspauze");
+	$('#timeout-container').fadeIn();
+
+	setTimeout(function(){ 
+		$('#timeout-container').fadeOut(500, () => {})
+	}, timeout);
 }

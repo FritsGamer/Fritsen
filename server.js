@@ -1,5 +1,4 @@
 ///// SETUP SERVER
-
 const express = require('express');
 const socket = require('socket.io');
 
@@ -26,6 +25,7 @@ const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 10000;
 const drinkTimeOut = 10000;
+const disconnectTimeout = 20000;
 const startHand = 5;
 const maxParticipants = 6;
 const log = false;
@@ -64,23 +64,33 @@ function onDisconnect(){
 	var matchId = player.matchId;
 	if(matchId){
 		var match = matches[matchId];
-		if(match){
-			match.playerIds.forEach(function(id) {
-				var p = players[id];
-				if(p) p.done = true; 
-			});
-			player.done = false;
+		if(match){			
+			match.prevState = match.state;
+			match.state = "disconnect";
+			player.disconnect = true;
+			timeout = disconnectTimeout;
 			var result = getRule("Disconnect", player.name);
-			checkWin(match, player, result);
+			
+			setTimeout(function(){ 
+				if(match.state === "disconnect"){					
+					match.playerIds.forEach(function(id) {
+						var p = players[id];
+						if(p) p.done = true;
+					});
+					player.done = false;
+					checkWin(match, player, result);
+				}				
+			}, disconnectTimeout);			
+			
+			return updateCards(match, result, timeout);			
 		}
 	} else if (player.inQueue){
 		player.inQueue = false;
 		var queue = getQueue();
 		queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
-	}
-	
-	delete players[this.id];
-	if(log) console.log("player deleted");
+		delete players[this.id];
+	    if(log) console.log("player deleted");
+	}	
 }
 
 
@@ -90,10 +100,46 @@ function joinQueue(socketId, name) {
 	if(log) console.log("joinQueue: " + socketId + " - " + name);
 	var player = players[socketId];
 	if(!player) return;
+	
+	for(matchId in matches){
+		var match = matches[matchId];
+		var disconnectId = "";
+		
+		if(match.state === "disconnect"){	
+			for (playerId in players) {
+				var p = players[playerId];
+				
+				if(p.disconnect){
+					players[socketId] = p;
+					match.state = match.prevState;
+					var index = match.playerIds.indexOf(playerId);
+					
+					match.playerIds.splice(index, 0);
+					match.playerIds.splice(index, 0, socketId);		
+					
+					if(match.turnId === playerId){
+						match.turnId = socketId;
+					}
+					
+					players[socketId].id = socketId;
+					players[socketId].name = name;
+					disconnectId = playerId;
+					break;
+				}
+			};
+			
+			if(disconnectId !== ""){
+				delete players[disconnectId];
+				
+				return updateCards(match, getRule("Reconnected", name));		
+			}
+		}		
+	};
 
 	player.inQueue = queueNumber;
 	queueNumber++;
 
+	player.id = socketId;
 	player.matchId = false;
 	player.name = name;
 	player.done = false;
@@ -181,7 +227,7 @@ function playCard(socketId, cardId, pileId) {
 	var player = players[socketId];
 	if(!match || !player) return;
 	
-	if((match.state === "vuileFrits" || match.state === "timeout"))
+	if(match.state === "vuileFrits" || match.state === "timeout" || match.state === "disconnect")
 		return;
 
 	var hand = player.cards;
@@ -250,7 +296,7 @@ function fritsCards(){
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];
 	
-	if((!match || !player || match.state === "vuileFrits" || match.state === "timeout"))
+	if(!match || !player || match.state === "vuileFrits" || match.state === "timeout" || match.state === "disconnect")
 		return;
 	
 	if(!match.frits && match.state === "playing" && match.turnId === this.id){
@@ -625,7 +671,8 @@ var Rules = [
 	new Rule("JokerFout", " - Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0),
 	new Rule("Uit", " is uitgefritst. ", 1),
 	new Rule("VuileFrits", " heeft een vuile frits gedaan", 0),
-	new Rule("Disconnect", " heeft het spel verlaten", 0)
+	new Rule("Disconnect", " heeft het spel verlaten", 0),
+	new Rule("Reconnected", " heeft het spel weer gejoined", 0),
 ];
 
 function getRule(name, playerName) {

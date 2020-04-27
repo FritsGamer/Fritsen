@@ -7,6 +7,11 @@ var localAchievements = [];
 var showingAchievements = false;
 
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
+	if(result.name === "Reconnected"){
+		startGame();
+		$('#timeout-container').hide();
+	}
+	
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
@@ -31,9 +36,13 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 				$('#turn').text("");
 				
 				if(result.value === 1 && timeout > 0){
-					showDrinkTimeout(timeout);
+					showTimeout(timeout, "Fritspauze");
 				}		
 			}
+		} else {
+			if(result.name === "Disconnect" && timeout > 0){
+				showTimeout(timeout, "Reconnecting...");
+			}			
 		}
 
 		// Vibrate when a card is played
@@ -156,8 +165,8 @@ function showAchievement() {
 	} 
 }
 
-function showDrinkTimeout(timeout) {
-	$('#timeout-text').text("Fritspauze");
+function showTimeout(timeout, message) {
+	$('#timeout-text').text(message);
 	$('#timeout-container').fadeIn();
 
 	setTimeout(function(){ 

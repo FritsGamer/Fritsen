@@ -78,7 +78,6 @@ function onDisconnect(){
 		var queue = getQueue();
 		queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
 	}
-		
 	
 	delete players[this.id];
 	if(log) console.log("player deleted");
@@ -99,6 +98,7 @@ function joinQueue(socketId, name) {
 	player.name = name;
 	player.done = false;
 	player.vuilefrits = 0;
+	player.turnCount = 0;
 	player.cards = [];
 	
 	var queue = getQueue();
@@ -157,12 +157,13 @@ function createMatch(participants) {
 	}
 
 	match.playerIds.forEach( function(id){ io.to(id).emit("match started"); });
-	updateCards(match, false);
+	updateCards(match, false, vuileFritsTime);
 
 	setTimeout(function(){
 		var m = matches[matchId];
 		if(m){
 			match.state = "playing";
+			match.turnId = -1;
 			nextPlayer(m);
 			updateCards(m, getRule("Update", false));
 		}
@@ -193,9 +194,12 @@ function playCard(socketId, cardId, pileId) {
 		return updateCards(match, getRule("DesBeurt", player.name));
 
 	var result = placeOnPile(cardId, pileId, match, hand, socketId, player);
-
+	var timeout = 0;
 	//valid move
 	if (result.value > 0) {
+		match.lastMove = pileId;
+		match.frits = false;
+		
 		//Remove player when he has no cards left
 		if(hand.length === 0) {
 			player.done = true;
@@ -213,12 +217,12 @@ function playCard(socketId, cardId, pileId) {
 		}
 		
 		match.state = "playing";
-		match.lastMove = pileId;
-		match.frits = false;
+		var achievements = getAchievements(match);
 
 		if (result.name === "Baudet"){
 			match.state = "baudet";
-
+			timeout = baudetTime;
+			
 			match.baudetTimeout = setTimeout(function(){
 				newHand(hand, match.deck);
 				match.state = "playing";
@@ -227,21 +231,18 @@ function playCard(socketId, cardId, pileId) {
 				updateCards(match, getRule("Update", false));
 			}, baudetTime);
 		} else {
-			var achievements = getAchievements(match)
-
 			nextPlayer(match);
 					
 			if(result.value === 1){
 				match.state = "timeout";
-				setTimeout(function(){
-					match.state = "playing";
-					updateCards(match, getRule("Update", false));
-				}, drinkTimeOut);
+				timeout = drinkTimeOut;
+				
+				setTimeout(function(){ match.state = "playing"; }, drinkTimeOut);
 			}
 		}
 	}
 	
-	return updateCards(match, result, achievements);
+	return updateCards(match, result, timeout, achievements);
 }
 
 function fritsCards(){
@@ -263,12 +264,7 @@ function fritsCards(){
 		}
 		
 		var result = getRule("Frits", player.name);
-		// TODO switch to turnCount...
-		if (!player.fritsCount) {
-			player.fritsCount = 0
-		}
-
-		player.fritsCount++
+		
 		updateCards(match, result);
 	} else {
 		if (match.turnId !== this.id && match.state !== "baudet"){
@@ -336,7 +332,7 @@ function getQueue(){
 	return queue;
 }
 
-function updateCards(match, result, achievements) {
+function updateCards(match, result, timeout, achievements) {
 	var piles = [];
 	for (var i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
@@ -352,14 +348,13 @@ function updateCards(match, result, achievements) {
 				checkWin(match, player, getRule("Uit", player.name));
 			}
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
-			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, achievements);
+			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, timeout, achievements);
 		}
 	}
 	if(log) console.log("updated cards");	
 }
 
-function getAchievements(match) {	
-	var turnPlayer = getTurnPlayer(match);
+function getAchievements(match) {
 	var piles = match.piles;
 	var newAchievements = []
 
@@ -369,26 +364,22 @@ function getAchievements(match) {
 
 	var currentPile = piles[match.lastMove]
 
-	// Gouden / Zilveren / Bronzen Frits
-	if (players[turnPlayer]) {
-		var player = players[turnPlayer];
-
+	// Uitfrits achievements
+	var player = players[match.turnId];
+	if (player) {
 		if (player.cards.length === 0) {
-			if (!player.fritsCount) {
-				newAchievements.push({
-					by: turnPlayer.name,
-					text: 'Gouden Frits',
-				})
-			} else if (!player.fritsCount === 1) {
-				newAchievements.push({
-					by: turnPlayer.name,
-					text: 'Zilveren Frits',
-				})
-			} else if (player.fritsCount === 2) {
-				newAchievements.push({
-					by: turnPlayer.name,
-					text: 'Bronzen Frits',
-				})
+			if (player.turnCount <= 2) {
+				newAchievements.push({ by: player.name,	text: 'Eiken Frits'	});
+			} else if (player.turnCount <= 3) {
+				newAchievements.push({ by: player.name, text: 'Platina Frits' });
+			} else if (player.turnCount <= 4) {
+				newAchievements.push({ by: player.name, text: 'Diamanten Frits' });
+			} else if (player.turnCount <= 5) {
+				newAchievements.push({ by: player.name, text: 'Gouden Frits' });
+			} else if (player.turnCount <= 7) {
+				newAchievements.push({ by: player.name, text: 'Zilveren Frits' });
+			} else if (player.turnCount <= 9) {
+				newAchievements.push({ by: player.name, text: 'Bronzen Frits' });
 			}
 		}
 	}
@@ -412,7 +403,7 @@ function getAchievements(match) {
 
 	if (counterKim === 1 && ids[size - 1] === 12) {
 		newAchievements.push({
-			by: turnPlayer.name,
+			by: player.name,
 			text: 'Eerste Kim'
 		})
 	} 
@@ -425,32 +416,20 @@ function getAchievements(match) {
 	var diff = ids[size - 1] - ids[size - 2];
 
 	if (diff > 9 && suits[size - 2] === suits[size - 1]) {
-		if (isStart) {
-			newAchievements.push({
-				by: turnPlayer.name,
-				text: 'Tactical Start'
-			})
-		} else {
-			newAchievements.push({
-				by: turnPlayer.name,
-				text: 'Tactical Frits'
-			})
-		}
+		var achievementText = isStart ? 'Tactical Start' : 'Tactical Frits';
+		newAchievements.push({
+			by: player.name,
+			text: achievementText
+		});
 	} else if (diff === 1 && suits[size - 2] === suits[size - 1]) {
-		if (isStart) {
-			newAchievements.push({
-				by: turnPlayer.name,
-				text: 'Soepele Start'
-			})
-		} else {
-			newAchievements.push({
-				by: turnPlayer.name,
-				text: 'Soepele Frits'
-			})
-		}
+		var achievementText = isStart ? 'Soepele Start' : 'Soepele Frits';
+		newAchievements.push({
+			by: player.name,
+			text: achievementText
+		});
 	} else if (isStart && diff === -1 && suits[size - 2] === suits[size - 1]) {
 		newAchievements.push({
-			by: turnPlayer.name,
+			by: player.name,
 			text: 'Offer Start'
 		})
 	} 
@@ -459,7 +438,7 @@ function getAchievements(match) {
 		ids[size - 1] === 6
 	) {
 		newAchievements.push({
-			by: turnPlayer.name,
+			by: player.name,
 			text: 'Lavendelfrits'
 		})
 	} 
@@ -471,7 +450,7 @@ function getAchievements(match) {
 		ids[size - 4] === 12 
 	) {
 		newAchievements.push({
-			by: turnPlayer.name,
+			by: player.name,
 			text: 'Vierde Kim',
 		})
 	}
@@ -479,27 +458,18 @@ function getAchievements(match) {
 	return newAchievements;
 }
 
-function getTurnPlayer(match){
-	var player = players[match.turnId];
-	if(!player)	return false;
-	
-	return {name: player.name, id: match.turnId, cards: player.cards.length};
-}
-
-
-function nextPlayer(match){
+function nextPlayer(match){	
 	var index = match.playerIds.indexOf(match.turnId);
-	if(index < 0) {		
-		match.turnId = match.playerIds[0];
-		return;
-	}
 
 	var next = (index + 1) % match.playerIds.length;
 	match.turnId = match.playerIds[next];
 
 	var p = players[match.turnId];
-	if(p && p.done)
+	if (p.done) {
 		nextPlayer(match);
+	} else {
+		p.turnCount++;
+	}
 }
 
 function checkWin(match, player, result){
@@ -514,7 +484,8 @@ function checkWin(match, player, result){
 	});
 
 	if(inGame <= 1){
-		updateCards(match, result);
+		var achievements = getAchievements(match);
+		updateCards(match, result, 0, achievements);
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
 		removeMatch(player.matchId);
 		return true;

@@ -6,7 +6,7 @@ var timeOutId = false;
 var localAchievements = [];
 var showingAchievements = false;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, achievements) {
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);

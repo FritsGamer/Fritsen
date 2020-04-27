@@ -18,7 +18,6 @@
 
 	<body>
 		<div class="table-image">
-			
 			<div class="board-image">
 				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
 				<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
@@ -27,25 +26,29 @@
 				<div id="players" class="queue"></div>
 				<button id="newgame" class="button" onclick="startMatch()" hidden></button>
 
-				<div id="status" class="message game"></div>
 				<div id="turn" class="message game"></div>
 				<button id="vuilefrits" class="button game" onclick="vuileFrits()"></button>	
 				<div id="deck" class="cardblock game" onclick="frits()"></div>
 				<div id="piles" class="game"></div>
 				<div id="hand" class="game"></div>
-			<div id="achievement-container" class="boardMessage">
-				<div class="star" id="star-top-left">★</div>
-				<div class="star" id="star-top-right">★</div>
-				<div class="star" id="star-bottom-left">★</div>
-				<div class="star" id="star-bottom-right">★</div>
-				<div id="achievement-by"></div>
-				<div id="achievement-text" class="text"></div>
+				<div id="achievement-container" class="boardMessage">
+					<div id="achievement-container">
+						<div class="star" id="star-top-left">★</div>
+						<div class="star" id="star-top-right">★</div>
+						<div class="star" id="star-bottom-left">★</div>
+						<div class="star" id="star-bottom-right">★</div>
+						<div id="achievement-by"></div>
+						<div id="achievement-text" class="text"></div>
+					</div>
+				</div>
+				<div id="timeout-container" class="boardMessage">
+					<div id="timeout-text" class="text"></div>
+				</div>
 			</div>
-			<div id="timeout-container" class="boardMessage">
-				<div id="timeout-text" class="text"></div>
-			</div>
+			<div id="notifications-container"></div>
 		</div>
-		
+		<div id="notifications-container"></div>
+
 		<script src="https://code.jquery.com/jquery-2.2.2.min.js" integrity="sha256-36cp2Co+/62rEAAYHLmRCPIych47CvdM+uTBJwSzWjI=" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
 		<script src="javascripts/game_client.js" type="text/javascript"></script>

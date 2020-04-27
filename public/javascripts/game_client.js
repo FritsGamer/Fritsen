@@ -10,13 +10,15 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result) 
 	showPiles(piles, frits, lastmove);
 	
 	if(result){
-		if(result.value < 2) setMessage(result.description);
+		setMessage(result.description);
 		
-		if(result.value > 0){
+		if(result.value !== 0){
 			$("#vuilefrits").hide();
 
-			if(result.name == "Baudet"){
+			if(result.name === "Baudet"){
 				$('#turn').text("Baudet");
+			} else {				
+				$('#turn').text("");
 			}
 		}
 
@@ -104,7 +106,7 @@ function setMessage(msg){
 	timeOutId = setTimeout(function(){
 		message.fadeOut();
 		timeOutId = false;
-	}, 3000);
+	}, 10000);
 }
 
 function playCard(card, pile) {	

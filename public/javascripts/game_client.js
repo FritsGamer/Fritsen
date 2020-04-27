@@ -55,11 +55,14 @@ socket.on("match started", function() {
 	startGame();
 });
 
-
 socket.on("game over", function(name) {
 	$("#turn").text(name + " heeft verloren en moet 2 fritsjes nemen");
 	// setMessage("Game is over\n" + name + " lost the game");
 	setTimeout(function(){ resetGame(); }, 5000);
+});
+
+socket.on("playerNames", function(names) {
+	alert(names.join());
 });
 
 function resetGame(){

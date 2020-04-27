@@ -28,7 +28,7 @@ const baudetTime = 10000;
 const drinkTimeOut = 10000;
 const startHand = 5;
 const maxParticipants = 6;
-const log = true;
+const log = false;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -49,6 +49,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('playCard', function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
+    socket.on('playerNames', playersInMatch);
 	if(log) console.log("connection handled");
 });
 
@@ -173,8 +174,7 @@ function createMatch(participants) {
 // FRITS MOVE HANDLERS
 
 function playCard(socketId, cardId, pileId) {
-	if(log) console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");
-	
+	if(log) console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");	
 	
 	var match = findMatchBySocketId(socketId);
 	var player = players[socketId];
@@ -289,7 +289,24 @@ function vuileFritsCards() {
 	if(log) console.log("vuileFritsCards handled");
 }
 
-
+function playersInMatch() {
+	if(log) console.log("getPlayerNames: " + this.id);
+	var match = findMatchBySocketId(this.id);
+	var player = players[this.id];	
+	
+	if (!match || !player) return;
+		
+		
+	var playerNames = [];
+	
+	match.playerIds.forEach(function(id) {
+		var p = players[id];
+		if(p) playerNames.push(p.name); 
+	});
+			
+	
+	io.to(this.id).emit("playerNames", playerNames);
+}
 // FRITS GAME HELPER FUNCTIONS
 
 function getQueue(){

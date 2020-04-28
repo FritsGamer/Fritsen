@@ -28,7 +28,7 @@ const drinkTimeOut = 10000;
 const disconnectTimeout = 20000;
 const startHand = 5;
 const maxParticipants = 6;
-const log = true;
+const log = false;
 
 
 // SOCKET CONNECTION FUNCTIONS
@@ -61,17 +61,19 @@ function onDisconnect(){
 	var player = players[this.id];
 	if(!player) return;
 
+	if(tryReconnectPlayer(player)) return;
+	
 	var matchId = player.matchId;
 	if(matchId){
 		var match = matches[matchId];
-		if(match){			
-			match.prevState = match.state;
+		if(match && !checkWin(match, player, result)){
 			match.state = "disconnect";
 			player.disconnect = true;
 			timeout = disconnectTimeout;
 			var result = getRule("Disconnect", player.name);
 			
-			setTimeout(function(){ 
+			setTimeout(function(){
+				console.log("timeout expired ", match);
 				if(match.state === "disconnect"){					
 					match.playerIds.forEach(function(id) {
 						var p = players[id];
@@ -101,47 +103,6 @@ function joinQueue(socketId, name) {
 	var player = players[socketId];
 	if(!player) return;
 	
-	for(matchId in matches){
-		var match = matches[matchId];
-		var disconnectId = "";
-		console.log(match.playerIds);
-		
-		if(match.state === "disconnect"){	
-			for (playerId in players) {
-				var p = players[playerId];
-				
-				if(p.disconnect){
-					players[socketId] = p;
-					match.state = match.prevState;
-					var index = match.playerIds.indexOf(playerId);
-					
-					delete match.playerIds[index];
-					match.playerIds.splice(index, 0, socketId);
-					
-					match.playerIds = match.playerIds.filter(function (el) {
-					  return el != null;
-					});
-					
-					console.log(match.playerIds);
-					
-					if(match.turnId === playerId){
-						match.turnId = socketId;
-					}
-					
-					players[socketId].id = socketId;
-					players[socketId].name = name;
-					disconnectId = playerId;
-					break;
-				}
-			};
-			
-			if(disconnectId !== ""){
-				delete players[disconnectId];
-				
-				return updateCards(match, getRule("Reconnected", name));		
-			}
-		}		
-	};
 
 	player.inQueue = queueNumber;
 	queueNumber++;
@@ -157,6 +118,49 @@ function joinQueue(socketId, name) {
 	var queue = getQueue();
 	queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
 	if(log) console.log("queue join handled");
+}
+
+function tryReconnectPlayer(player){	
+	for(matchId in matches){
+		var match = matches[matchId];
+		var disconnectId = "";
+		
+		if(match.state === "disconnect"){	
+			for (playerId in players) {
+				var p = players[playerId];
+				
+				if(p.disconnect){
+					players[socketId] = p;
+					match.state = "playing";
+					var index = match.playerIds.indexOf(playerId);
+					
+					delete match.playerIds[index];
+					match.playerIds.splice(index, 0, socketId);
+					
+					match.playerIds = match.playerIds.filter(function (el) {
+					  return el != null;
+					});
+					
+					if(match.turnId === playerId){
+						match.turnId = socketId;
+					}
+					
+					players[socketId].id = socketId;
+					players[socketId].name = name;
+					disconnectId = playerId;
+					break;
+				}
+			};
+			
+			if(disconnectId !== ""){
+				delete players[disconnectId];
+				updateCards(match, getRule("Reconnected", name));
+				return true;	
+			}
+		}		
+	};
+	
+	return false;
 }
 
 function createMatches(){
@@ -213,13 +217,12 @@ function createMatch(participants) {
 	updateCards(match, false, vuileFritsTime);
 
 	setTimeout(function(){
-		var m = matches[matchId];
-		if(m){
-			match.state = "playing";
-			match.turnId = -1;
-			nextPlayer(m);
-			updateCards(m, getRule("Update", false));
+		if(match.state === "vuileFrits"){
+			match.state = "playing";			
 		}
+		match.turnId = -1;
+		nextPlayer(m);
+		updateCards(m, getRule("Update", false));
 	}, vuileFritsTime);
 	if(log) console.log("match created");
 }
@@ -278,7 +281,9 @@ function playCard(socketId, cardId, pileId) {
 			
 			match.baudetTimeout = setTimeout(function(){
 				newHand(hand, match.deck);
-				match.state = "playing";
+				if(match.state === "baudet"){
+					match.state = "playing"; 
+				}
 				match.baudetTimeout = false;
 				nextPlayer(match);
 				updateCards(match, getRule("Update", false));
@@ -290,7 +295,11 @@ function playCard(socketId, cardId, pileId) {
 				match.state = "timeout";
 				timeout = drinkTimeOut;
 				
-				setTimeout(function(){ match.state = "playing"; }, drinkTimeOut);
+				setTimeout(function(){ 
+					if(match.state === "timeout"){
+						match.state = "playing"; 
+					}				
+				}, drinkTimeOut);
 			}
 		}
 	}
@@ -307,7 +316,6 @@ function fritsCards(){
 		return;
 	
 	if(!match.frits && match.state === "playing" && match.turnId === this.id){
-		match.state = "playing";
 		drawCards(player.cards, match.deck, 2);
 		match.frits = true;	
 
@@ -527,6 +535,7 @@ function nextPlayer(match){
 }
 
 function checkWin(match, player, result){
+	if(log) console.log(match);
 	var inGame = 0;
 	var loserName = player.name;
 	match.playerIds.forEach(function(id) {
@@ -542,6 +551,7 @@ function checkWin(match, player, result){
 		updateCards(match, result, 0, achievements);
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
 		removeMatch(player.matchId);
+		if(log) console.log("removed match:" , match);
 		return true;
 	}
 	return false;

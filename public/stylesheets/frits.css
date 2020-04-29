@@ -35,6 +35,36 @@ body{
   margin: auto;
 }
 
+#queue-image {
+  background-image: url("../images/queue.png");
+  background-size: 14vmin;
+  height: 20vmin;
+  width: 20vmin;
+  bottom: 0;
+  left: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  margin: auto;
+  color: white;
+  display: none;
+}
+
+#rules-image {
+  background-image: url("../images/rules.png");
+  background-size: 14vmin;
+  height: 20vmin;
+  width: 20vmin;
+  bottom: 0;
+  left: 18vmin;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  margin: auto;
+  color: white;
+  display: none;
+}
+
 .boardMessage {
   border-radius: 1vmin;
   position: absolute;

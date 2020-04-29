@@ -18,6 +18,8 @@
 
 	<body>
 		<div class="table-image">
+			<div id="queue-image" onclick="getPlayerNames()"></div>
+			<div id="rules-image" onclick="openRulePDF()"></div>
 			<div class="board-image">
 				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
 				<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
@@ -68,7 +70,7 @@
 				});
 
 			});
-			
+
 			function joinQueue(){
 				var name = $('#playerName').val();
 				if(name != ""){

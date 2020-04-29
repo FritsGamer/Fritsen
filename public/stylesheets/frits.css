@@ -332,16 +332,20 @@ body{
   left: 3%;
 }
 
+#lang-flag {
+  display: none;
+}
+
 .flag{
     display: block;
     position: absolute;
-    background-repeat: round;
+    bottom: 4vmin;
+    right: 4vmin;
+    background-size: 100% 100%;
     background-color: transparent;
     border: none;
-    top: 4%;
-    left: 91%;
-    height: 36px;
-    width: 54px;
+    height: 12vmin;
+    width: 18vmin;
 }
 
 .flag.nl{

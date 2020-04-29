@@ -6,6 +6,8 @@ var localAchievements = [];
 var showingAchievements = false;
 var playerNamesShown = false;
 
+var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
+
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
 	if(result.name === "Reconnected"){
 		startGame();
@@ -15,6 +17,13 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 		$('#timeout-container').hide();
 	}
 	
+	// Save state to be able to redraw cards when you click the flag
+	lastDeck = deck;
+	lastCards = cards;
+	lastPiles = piles;
+	lastFrits = frits;
+	lastLastmove = lastmove;
+
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
@@ -82,6 +91,7 @@ socket.on("match started", function() {
 	startGame();
 	$("#queue-image").show();
 	$("#rules-image").show();
+	$("#lang-flag").show()
 
 	setTimeout(() => {
 		socket.emit("playerNames")
@@ -103,6 +113,9 @@ socket.on("playerNames", function(names) {
 });
 
 function resetGame(){
+	$("#lang-flag").hide()
+	$("#queue-image").hide();
+	$("#rules-image").hide();
 	$("#hand").empty();
 	$("#deck").empty();
 	$("#piles").empty();
@@ -223,5 +236,11 @@ function switchLanguage(){
 	} else {
 		flag.removeClass('fr')
 		flag.addClass('nl')
+	}
+
+	if (lastDeck) {
+		showDeck(lastDeck);
+		showHand(lastCards);
+		showPiles(lastPiles, lastFrits, lastLastmove);
 	}
 }

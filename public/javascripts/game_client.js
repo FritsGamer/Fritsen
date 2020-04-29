@@ -216,11 +216,12 @@ function showTimeout(timeout, message) {
 }
 
 function switchLanguage(){
-	if ($('#lang-flag').hasClass('nl')) {
-		$('#lang-flag').removeClass('nl')
-		$('#lang-flag').addClass('fr')
+	var flag = $('#lang-flag');
+	if (flag.hasClass('nl')) {
+		flag.removeClass('nl')
+		flag.addClass('fr')
 	} else {
-		$('#lang-flag').removeClass('fr')
-		$('#lang-flag').addClass('nl')
-	}	
+		flag.removeClass('fr')
+		flag.addClass('nl')
+	}
 }

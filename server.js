@@ -28,13 +28,11 @@ const drinkTimeOut = 10000;
 const disconnectTimeout = 20000;
 const startHand = 5;
 const maxParticipants = 6;
-const log = false;
-
 
 // SOCKET CONNECTION FUNCTIONS
 
 io.sockets.on('connection', function (socket) {
-	if(log) console.log("connection: " + socket.id);
+	console.log("connection: " + socket.id);
 	players[socket.id] = {
 		matchId: false,
 		inQueue: false
@@ -50,14 +48,14 @@ io.sockets.on('connection', function (socket) {
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
     socket.on('getPlayerNames', playersInMatch);
-	if(log) console.log("connection handled");
+	  console.log("connection handled");
 });
 
 
 // SOCKET HANDLERS
 
 function onDisconnect(){
-	if(log) console.log("disconnect: " + this.id);
+	console.log("onDisconnect: disconnect: " + this.id);
 	var player = players[this.id];
 	if(!player) return;
 
@@ -73,7 +71,7 @@ function onDisconnect(){
 			var result = getRule("Disconnect", player.name);
 			
 			setTimeout(function(){
-				console.log("timeout expired ", match);
+				console.log("onDisconnect: timeout expired ", match);
 				if(match.state === "disconnect"){					
 					match.playerIds.forEach(function(id) {
 						var p = players[id];
@@ -91,7 +89,7 @@ function onDisconnect(){
 		var queue = getQueue();
 		queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
 		delete players[this.id];
-	    if(log) console.log("player deleted");
+	   console.log("onDisconnect: player deleted");
 	}	
 }
 
@@ -99,7 +97,7 @@ function onDisconnect(){
 // MATCH HANDLERS
 
 function joinQueue(socketId, name) {
-	if(log) console.log("joinQueue: " + socketId + " - " + name);
+	console.log("joinQueue: joinQueue: " + socketId + " - " + name);
 	var player = players[socketId];
 	if(!player) return;
 	
@@ -117,7 +115,7 @@ function joinQueue(socketId, name) {
 	
 	var queue = getQueue();
 	queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
-	if(log) console.log("queue join handled");
+	console.log("joinQueue: join handled");
 }
 
 function tryReconnectPlayer(player){	
@@ -184,7 +182,7 @@ function createMatches(){
 }
 
 function createMatch(participants) {
-	if(log) console.log("createMatch: " + participants.length);
+	console.log("createMatch: participants.length=",participants.length);
 
 	var matchId = createId();
 	matches[matchId] = { playerIds: [], state: "vuileFrits", turnId: false, piles: [], frits: false, lastMove: -1, deck: createDeck(), baudetTimeout: false };
@@ -224,14 +222,14 @@ function createMatch(participants) {
 		nextPlayer(match);
 		updateCards(match, getRule("Update", false));
 	}, vuileFritsTime);
-	if(log) console.log("match created");
+	console.log("createMatch: match created");
 }
 
 
 // FRITS MOVE HANDLERS
 
 function playCard(socketId, cardId, pileId) {
-	if(log) console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");	
+	console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");	
 	
 	var match = findMatchBySocketId(socketId);
 	var player = players[socketId];
@@ -308,7 +306,7 @@ function playCard(socketId, cardId, pileId) {
 }
 
 function fritsCards(){
-	if(log) console.log("fritsCards: " + this.id);
+	console.log("fritsCards: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];
 	
@@ -336,13 +334,11 @@ function fritsCards(){
 			return updateCards(match, getRule("Fout", player.name));	
 		}
 	}
-	if(log) {
-		console.log("fritsCards handled");
-	}
+	console.log("fritsCards: handled");
 }
 
 function vuileFritsCards() {
-	if(log) console.log("vuileFritsCards: " + this.id);
+	console.log("vuileFritsCards: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	if(match && match.state === "vuileFrits"){
 		var player = players[this.id];
@@ -354,11 +350,11 @@ function vuileFritsCards() {
 			player.vuilefrits = Date.now() + vuileFritsTimeout;
 		}
 	}
-	if(log) console.log("vuileFritsCards handled");
+	console.log("vuileFritsCards: handled");
 }
 
 function playersInMatch() {
-	if(log) console.log("getPlayerNames: " + this.id);
+	console.log("playersInMatch: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];	
 	
@@ -412,7 +408,7 @@ function updateCards(match, result, timeout, achievements) {
 			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, timeout, achievements);
 		}
 	}
-	if(log) console.log("updated cards");	
+	console.log("updateCards: cards updated");	
 }
 
 function getAchievements(match) {
@@ -535,7 +531,7 @@ function nextPlayer(match){
 }
 
 function checkWin(match, player, result){
-	if(log) console.log(match);
+	console.log('checkWin: match=',match);
 	var inGame = 0;
 	var loserName = player.name;
 	match.playerIds.forEach(function(id) {
@@ -551,7 +547,7 @@ function checkWin(match, player, result){
 		updateCards(match, result, 0, achievements);
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
 		removeMatch(player.matchId);
-		if(log) console.log("removed match:" , match);
+		console.log("checkWin: removed match=" , match);
 		return true;
 	}
 	return false;
@@ -694,7 +690,7 @@ var Rules = [
 ];
 
 function getRule(name, playerName) {
-	if(log) console.log("got rule " + name + " by " + playerName);
+	console.log("getRule: name=", name, 'playerName=', playerName);
 	var rule = Rules.find(function(r) { return r.name === name; });
 	
 	if(playerName){

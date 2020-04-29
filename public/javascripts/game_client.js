@@ -4,10 +4,14 @@ var started = false;
 var timeOutId = false;
 var localAchievements = [];
 var showingAchievements = false;
+var playerNamesShown = false;
 
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
 	if(result.name === "Reconnected"){
 		startGame();
+		$("#queue-image").show();
+		$("#rules-image").show();
+		socket.emit("playerNames")
 		$('#timeout-container').hide();
 	}
 	
@@ -76,6 +80,12 @@ socket.on("match started", function() {
 	canVuileFrits = true;
 	queueMessage('Iedereen mag nu vuile fritsen',9000)
 	startGame();
+	$("#queue-image").show();
+	$("#rules-image").show();
+
+	setTimeout(() => {
+		socket.emit("playerNames")
+	}, 10000)	
 });
 
 socket.on("game over", function(name) {
@@ -84,7 +94,12 @@ socket.on("game over", function(name) {
 });
 
 socket.on("playerNames", function(names) {
-	alert(names.join());
+	var timeout = 10000;
+	queueMessage(names.join(' ➡️ '), timeout);
+
+	setTimeout(() => {
+		playerNamesShown = false;
+	}, timeout);
 });
 
 function resetGame(){
@@ -122,6 +137,20 @@ function startMatch() {
 function getPlayerNames() {
 	socket.emit("getPlayerNames");
 }
+
+function getPlayerNames() {
+	if (playerNamesShown) {
+		return;
+	}
+
+	playerNamesShown = true;
+	socket.emit("playerNames")
+}
+
+function openRulePDF(url) {
+	var win = window.open('https://fritsen.app', '_blank');
+	win.focus();
+  }
 
 function queueMessage(msg, timeout){
 	if (!msg) {

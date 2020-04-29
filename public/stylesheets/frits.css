@@ -338,10 +338,10 @@ body{
     background-repeat: round;
     background-color: transparent;
     border: none;
-    top: 4%;
-    left: 91%;
-    height: 36px;
-    width: 54px;
+	top: -14%;
+    left: 92%;
+    height: 6%;
+    width: 6%;
 }
 
 .flag.nl{

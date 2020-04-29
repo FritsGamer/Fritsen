@@ -24,7 +24,6 @@ var queueNumber = 1;
 const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 10000;
-const drinkTimeOut = 10000;
 const disconnectTimeout = 20000;
 const startHand = 5;
 const maxParticipants = 6;
@@ -48,7 +47,8 @@ io.sockets.on('connection', function (socket) {
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
     socket.on('getPlayerNames', playersInMatch);
-	  console.log("connection handled");
+    socket.on('update', updateCardsForPlayer);
+	console.log("connection handled");
 });
 
 
@@ -58,8 +58,6 @@ function onDisconnect(){
 	console.log("onDisconnect: disconnect: " + this.id);
 	var player = players[this.id];
 	if(!player) return;
-
-	if(tryReconnectPlayer(player)) return;
 	
 	var matchId = player.matchId;
 	if(matchId){
@@ -99,8 +97,9 @@ function onDisconnect(){
 function joinQueue(socketId, name) {
 	console.log("joinQueue: joinQueue: " + socketId + " - " + name);
 	var player = players[socketId];
-	if(!player) return;
-	
+	if(!player) return;	
+
+	if(tryReconnectPlayer(player, socketId, name)) return;
 
 	player.inQueue = queueNumber;
 	queueNumber++;
@@ -118,7 +117,7 @@ function joinQueue(socketId, name) {
 	console.log("joinQueue: join handled");
 }
 
-function tryReconnectPlayer(player){	
+function tryReconnectPlayer(player, socketId, name){	
 	for(matchId in matches){
 		var match = matches[matchId];
 		var disconnectId = "";
@@ -144,7 +143,7 @@ function tryReconnectPlayer(player){
 					}
 					
 					players[socketId].id = socketId;
-					players[socketId].name = name;
+					players[socketId].name = p.name;
 					disconnectId = playerId;
 					break;
 				}
@@ -212,7 +211,7 @@ function createMatch(participants) {
 	}
 
 	match.playerIds.forEach( function(id){ io.to(id).emit("match started"); });
-	updateCards(match, false, vuileFritsTime);
+	updateCards(match, getRule("Update", false), vuileFritsTime);
 
 	setTimeout(function(){
 		if(match.state === "vuileFrits"){
@@ -220,7 +219,7 @@ function createMatch(participants) {
 		}
 		match.turnId = -1;
 		nextPlayer(match);
-		updateCards(match, getRule("Update", false));
+		updateCards(match, getRule("Start", false));
 	}, vuileFritsTime);
 	console.log("createMatch: match created");
 }
@@ -235,17 +234,23 @@ function playCard(socketId, cardId, pileId) {
 	var player = players[socketId];
 	if(!match || !player) return;
 	
-	if(match.state === "vuileFrits" || match.state === "timeout" || match.state === "disconnect")
+	if(match.state === "timeout" || match.state === "disconnect")
 		return;
+	
+	if (match.state === "vuileFrits") {	
+		return updateCards(match, getRule("DesVuil", player.name));		
+	}
 
 	var hand = player.cards;
 	var piles = match.piles;
 
-	if(cardId >= hand.length || pileId >= piles.length)
-		return updateCards(match, getRule("Fout", player.name));
+	if (cardId >= hand.length || pileId >= piles.length) {
+		return updateCards(match, getRule("Fout", player.name));		
+	}
 
-	if((match.state === "playing" && match.turnId !== socketId))
-		return updateCards(match, getRule("DesBeurt", player.name));
+	if ((match.state === "playing" && match.turnId !== socketId)) {
+		return updateCards(match, getRule("DesBeurt", player.name));		
+	}
 
 	var result = placeOnPile(cardId, pileId, match, hand, socketId, player);
 	var timeout = 0;
@@ -259,7 +264,7 @@ function playCard(socketId, cardId, pileId) {
 			player.done = true;
 
 			var rule = getRule("Uit", player.name);
-			result = new Rule(rule.name, rule.description + result.description, rule.value);
+			result = new Rule(rule.name, rule.description + result.description, rule.value, rule.timeout);
 
 			if(checkWin(match, player, result))
 				return;
@@ -287,18 +292,7 @@ function playCard(socketId, cardId, pileId) {
 				updateCards(match, getRule("Update", false));
 			}, baudetTime);
 		} else {
-			nextPlayer(match);
-					
-			if(result.value === 1){
-				match.state = "timeout";
-				timeout = drinkTimeOut;
-				
-				setTimeout(function(){ 
-					if(match.state === "timeout"){
-						match.state = "playing"; 
-					}				
-				}, drinkTimeOut);
-			}
+			nextPlayer(match);			
 		}
 	}
 	
@@ -310,8 +304,12 @@ function fritsCards(){
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];
 	
-	if(!match || !player || match.state === "vuileFrits" || match.state === "timeout" || match.state === "disconnect")
+	if(!match || !player || match.state === "timeout" || match.state === "disconnect")
 		return;
+	
+	if (match.state === "vuileFrits") {
+		return updateCards(match, getRule("DesVuil", player.name));			
+	}
 	
 	if(!match.frits && match.state === "playing" && match.turnId === this.id){
 		drawCards(player.cards, match.deck, 2);
@@ -371,6 +369,23 @@ function playersInMatch() {
 	
 	io.to(this.id).emit("playerNames", playerNames);
 }
+
+function updateCardsForPlayer(){
+	var match = findMatchBySocketId(this.id);
+	var player = players[this.id];
+	
+	if(!match || !player) return;
+	
+	var piles = [];
+	for (var i = 0; i < match.piles.length; i++) {
+		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
+		piles.push(asStrings);
+	}	
+	
+	var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
+	io.to(this.id).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove);
+}
+
 // FRITS GAME HELPER FUNCTIONS
 
 function getQueue(){
@@ -407,6 +422,17 @@ function updateCards(match, result, timeout, achievements) {
 			var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
 			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, timeout, achievements);
 		}
+	}
+	
+	if(result && result.timeout > 0){
+		match.state = "timeout";
+		timeout = result.timeout;
+		
+		setTimeout(function(){ 
+			if(match.state === "timeout"){
+				match.state = "playing"; 
+			}				
+		}, result.timeout);
 	}
 	console.log("updateCards: cards updated");	
 }
@@ -655,38 +681,41 @@ function addPile(match){
 	return pile;
 }
 
-function Rule(name, description, value) {
+function Rule(name, description, value, timeout) {
   this.name = name;
   this.description = description;
   this.value = value;
+  this.timeout = timeout;
 }
 
 var Rules = [
-	new Rule("DesBeurt", " - Fritsje des: Je bent niet aan de beurt", 0),
-	new Rule("Fout", " - Fritsje des: Zet is niet mogelijk, neem 1 fritsje", 0),
-	new Rule("Goed", " heeft een kaart opgelegd", 2),
-	new Rule("Update", "", 2),
-	new Rule("Offer", " - Offerfrits: Neem 1 fritsje", 1),
-	new Rule("Joker", " - Joker: Alle anderen nemen 1 fritsje", 1),
-	new Rule("Kim", " - Kim: Alle anderen nemen 1 fritsje", 1),
-	new Rule("VierdeKim", "Vierde Kim: Alle anderen nemen 2 fritsjes", 1),
-	new Rule("Joris", " - Jorisje: Alle anderen nemen 1 fritsje", 1),
-	new Rule("Lisa", " - Lisa: Alle anderen nemen 1 fritsje", 1),
-	new Rule("Baudet", " - Baudet: Ruil je hand met de stapel en neem 2 fritsjes", 1),
-	new Rule("BaudetFout", " - Je kunt niet uitkomen met Baudet, neem 1 fritsje", 0),
-	new Rule("Klaver", " - Klaver! Je voorkomt dat Thierry aan de macht komt. De speler met Baudet mag niet ruilen", 1),
-	new Rule("Erik", " - Erikje! Je hebt jezelf geklaverd! neem zelf nog wel 2 fritsjes voor het spelen van Baudet", 1),
-	new Rule("KlaverFout", " - Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0),
-	new Rule("DubbelNegen", " - Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1),
-	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1),
-	new Rule("Frits", " heeft gefritst", 1),
-	new Rule("AlGefritst", " - Je hebt al gefritst, neem 1 fritsje des", 0),
-	new Rule("JokerUit", " - Je mag niet uitkomen met een Joker, neem 1 fritsje", 0),
-	new Rule("JokerFout", " - Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0),
-	new Rule("Uit", " is uitgefritst. ", 1),
-	new Rule("VuileFrits", " heeft een vuile frits gedaan", 0),
-	new Rule("Disconnect", " heeft het spel verlaten", 0),
-	new Rule("Reconnected", " heeft het spel weer gejoined", 0),
+	new Rule("DesBeurt", " - Fritsje des: Je bent niet aan de beurt", 0, 2500),
+	new Rule("DesVuil", " - Fritsje des: Je mag geen zet doen tijdens vuile fritsen", 0, 0),
+	new Rule("Fout", " - Fritsje des: Zet is niet mogelijk, neem 1 fritsje", 0, 2500),
+	new Rule("Goed", " heeft een kaart opgelegd", 2, 0),
+	new Rule("Update", "", 0, 0),
+	new Rule("Start", "", 2, 0),
+	new Rule("Offer", " - Offerfrits: Neem 1 fritsje", 1, 2500),
+	new Rule("Joker", " - Joker: Alle anderen nemen 1 fritsje", 1, 9000),
+	new Rule("Kim", " - Kim: Alle anderen nemen 1 fritsje", 1, 9000),
+	new Rule("VierdeKim", "Vierde Kim: Alle anderen nemen 2 fritsjes", 1, 9000),
+	new Rule("Joris", " - Jorisje: Alle anderen nemen 1 fritsje", 1, 9000),
+	new Rule("Lisa", " - Lisa: Alle anderen nemen 1 fritsje", 1, 9000),
+	new Rule("Baudet", " - Baudet: Ruil je hand met de stapel en neem 2 fritsjes", 1, 0),
+	new Rule("BaudetFout", " - Je kunt niet uitkomen met Baudet, neem 1 fritsje", 0, 2500),
+	new Rule("Klaver", " - Klaver! Je voorkomt dat Thierry aan de macht komt. De speler met Baudet mag niet ruilen", 1, 5000),
+	new Rule("Erik", " - Erikje! Je hebt jezelf geklaverd! neem zelf nog wel 2 fritsjes voor het spelen van Baudet", 1, 2500),
+	new Rule("KlaverFout", " - Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0, 2500),
+	new Rule("DubbelNegen", " - Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1, 9000),
+	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1, 0),
+	new Rule("Frits", " heeft gefritst", 1, 2500),
+	new Rule("AlGefritst", " - Je hebt al gefritst, neem 1 fritsje des", 0, 2500),
+	new Rule("JokerUit", " - Je mag niet uitkomen met een Joker, neem 1 fritsje", 0, 2500),
+	new Rule("JokerFout", " - Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0, 2500),
+	new Rule("Uit", " is uitgefritst. ", 1, 0),
+	new Rule("VuileFrits", " heeft een vuile frits gedaan", 0, 0),
+	new Rule("Disconnect", " heeft het spel verlaten", 0, 0),
+	new Rule("Reconnected", " heeft het spel weer gejoined", 0, 0),
 ];
 
 function getRule(name, playerName) {

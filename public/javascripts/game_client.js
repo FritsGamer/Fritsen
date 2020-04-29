@@ -135,16 +135,12 @@ function startMatch() {
 }
 
 function getPlayerNames() {
-	socket.emit("getPlayerNames");
-}
-
-function getPlayerNames() {
 	if (playerNamesShown) {
 		return;
 	}
 
 	playerNamesShown = true;
-	socket.emit("playerNames")
+	socket.emit("getPlayerNames")
 }
 
 function openRulePDF(url) {

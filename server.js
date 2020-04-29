@@ -49,7 +49,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('playCard', function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
-    socket.on('playerNames', playersInMatch);
+    socket.on('getPlayerNames', playersInMatch);
 	if(log) console.log("connection handled");
 });
 
@@ -221,8 +221,8 @@ function createMatch(participants) {
 			match.state = "playing";			
 		}
 		match.turnId = -1;
-		nextPlayer(m);
-		updateCards(m, getRule("Update", false));
+		nextPlayer(match);
+		updateCards(match, getRule("Update", false));
 	}, vuileFritsTime);
 	if(log) console.log("match created");
 }

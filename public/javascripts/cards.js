@@ -1,5 +1,3 @@
-var cardImagesUrl = '../images/cards/fr/';
-
 function showDeck(nrCards){
 	var deck = $("#deck");
 	deck.empty();
@@ -7,7 +5,7 @@ function showDeck(nrCards){
 	nrCards /= 3;
 
 	for (i = 0; i < nrCards; i++) { 
-		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='"+cardImagesUrl+"CR.png'/>";
+		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.png'/>";
 		deck.append(card);
 	}
 }
@@ -66,7 +64,7 @@ function showHand(cards){
 			leftMargin = -4 * (cards.length - firstRow) + 8 * (i - firstRow);
 		}
 
-		elem = "<img id='card" + i + "' class='cardblock' style='margin-top:" + topMargin + "%; margin-left:" + leftMargin + "%' src='"+ cardImagesUrl + c + ".png' onclick='select(this)' />";
+		elem = "<img id='card" + i + "' class='cardblock' style='margin-top:" + topMargin + "%; margin-left:" + leftMargin + "%' src='"+ getCardsUrl() + c + ".png' onclick='select(this)' />";
 		hand.append(elem);
 	}
 }
@@ -95,4 +93,12 @@ function placeCard(pile) {
 	var selectedPile = pile[0];
 
 	playCard(selectedCard.id, selectedPile.id)
+}
+
+function getCardsUrl(){
+	if($('#lang-flag').hasClass('fr')){
+		return '../images/cards/fr/'
+	}
+	
+	return '../images/cards/en/'	
 }

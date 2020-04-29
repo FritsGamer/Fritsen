@@ -1,4 +1,3 @@
-
 var socket = io();
 var canVuileFrits = true;
 var started = false;
@@ -120,8 +119,8 @@ function startMatch() {
 	socket.emit("startMatch");
 }
 
-function playersNames() {
-	socket.emit("playersNames");
+function getPlayerNames() {
+	socket.emit("getPlayerNames");
 }
 
 function queueMessage(msg, timeout){
@@ -189,4 +188,14 @@ function showTimeout(timeout, message) {
 	setTimeout(function(){ 
 		$('#timeout-container').fadeOut(500, () => {})
 	}, timeout);
+}
+
+function switchLanguage(){
+	if ($('#lang-flag').hasClass('nl')) {
+		$('#lang-flag').removeClass('nl')
+		$('#lang-flag').addClass('fr')
+	} else {
+		$('#lang-flag').removeClass('fr')
+		$('#lang-flag').addClass('nl')
+	}	
 }

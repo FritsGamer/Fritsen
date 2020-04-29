@@ -302,3 +302,22 @@ body{
   left: 3%;
 }
 
+.flag{
+    display: block;
+    position: absolute;
+    background-repeat: round;
+    background-color: transparent;
+    border: none;
+    top: 4%;
+    left: 91%;
+    height: 36px;
+    width: 54px;
+}
+
+.flag.nl{
+    background-image: url(../images/language/nl.png);
+}
+
+.flag.fr{
+    background-image: url(../images/language/fr.png);
+}

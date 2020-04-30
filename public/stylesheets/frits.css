@@ -332,13 +332,17 @@ body{
   left: 3%;
 }
 
+#lang-flag {
+  display: none;
+}
+
 .flag{
     display: block;
     position: absolute;
-    background-repeat: round;
+    background-size: 100% 100%;
     background-color: transparent;
     border: none;
-	top: -14%;
+    top: -14%;
     left: 92%;
     height: 6%;
     width: 6%;

@@ -9,7 +9,9 @@ const server = app.listen(process.env.PORT || 9999, function() {
 });
 
 //Static files
-app.use(express.static("public"));
+app.use(express.static("public", {
+	maxAge: '1d', // Cache for a day
+}));
 
 //Socket setup
 const io = socket(server);

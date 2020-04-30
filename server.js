@@ -47,7 +47,6 @@ io.sockets.on('connection', function (socket) {
     socket.on('frits', fritsCards);
     socket.on('vuileFrits', vuileFritsCards);
     socket.on('getPlayerNames', playersInMatch);
-    socket.on('update', updateCardsForPlayer);
 	console.log("connection handled");
 });
 
@@ -277,7 +276,7 @@ function playCard(socketId, cardId, pileId) {
 		}
 		
 		match.state = "playing";
-		var achievements = getAchievements(match);
+		var achievements = getAchievements(match, result);
 
 		if (result.name === "Baudet"){
 			match.state = "baudet";
@@ -371,22 +370,6 @@ function playersInMatch() {
 	io.to(this.id).emit("playerNames", playerNames);
 }
 
-function updateCardsForPlayer(){
-	var match = findMatchBySocketId(this.id);
-	var player = players[this.id];
-
-	if(!match || !player) return;
-
-	var piles = [];
-	for (var i = 0; i < match.piles.length; i++) {
-		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
-		piles.push(asStrings);
-	}
-
-	var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
-	io.to(this.id).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove);
-}
-
 // FRITS GAME HELPER FUNCTIONS
 
 function getQueue(){
@@ -438,7 +421,7 @@ function updateCards(match, result, timeout, achievements) {
 	console.log("updateCards: cards updated");
 }
 
-function getAchievements(match) {
+function getAchievements(match, result) {
 	var piles = match.piles;
 	var newAchievements = []
 
@@ -474,23 +457,25 @@ function getAchievements(match) {
 	
 	if (size < 1) {
 		return newAchievements;
+	}	
+
+	if (ids[size - 1] === 12) {		
+		var counterKim = 0;
+		piles.forEach((pile) => {
+			pile.cards.forEach((card) => {
+				if (card.identity === 12) {
+					counterKim++;
+				}
+			})
+		})
+		
+		if (counterKim === 1) {
+			newAchievements.push({
+				by: player.name,
+				text: 'Eerste Kim'
+			})
+		}
 	}
-
-	var counterKim = 0;
-	piles.forEach((pile) => {
-		pile.cards.forEach((card) => {
-			if (card.identity === 12) {
-				counterKim++;
-			}
-		})
-	})
-
-	if (counterKim === 1 && ids[size - 1] === 12) {
-		newAchievements.push({
-			by: player.name,
-			text: 'Eerste Kim'
-		})
-	} 
 
 	if (size < 2) {
 		return newAchievements;
@@ -511,7 +496,7 @@ function getAchievements(match) {
 			by: player.name,
 			text: achievementText
 		});
-	} else if (isStart && diff === -1 && suits[size - 2] === suits[size - 1]) {
+	} else if (isStart && result.name === "Offer") {
 		newAchievements.push({
 			by: player.name,
 			text: 'Offer Start'
@@ -570,7 +555,7 @@ function checkWin(match, player, result){
 	});
 
 	if(inGame <= 1){
-		var achievements = getAchievements(match);
+		var achievements = getAchievements(match, result);
 		updateCards(match, result, 0, achievements);
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
 		removeMatch(player.matchId);

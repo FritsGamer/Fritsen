@@ -38,7 +38,7 @@ function showPiles(piles, frits, lastmove){
 	
 		for (var j = 0; j < pile.length; j++) {
 			var c = pile[j];
-			var img = "<img class='card' src='"+getCardsUrl() + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
+			var img = "<img class='card' src='" + getCardsUrl() + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
 			p.append(img);
 		}
 		p.click(function() {

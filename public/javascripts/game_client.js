@@ -9,7 +9,7 @@ var playerNamesShown = false;
 var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
 
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
-	if(result.name === "Reconnected"){
+	if(result && result.name === "Reconnected"){
 		startGame();
 		$("#queue-image").show();
 		$("#rules-image").show();
@@ -45,18 +45,16 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 			if(result.name === "Baudet"){
 				$('#turn').text("Baudet");
 			} else {		
-				$('#turn').text("");
-				
-				if(result.value === 1 && timeout > 0){
-					showTimeout(timeout, "Fritspauze");
-				}		
+				$('#turn').text("");		
 			}
-		} else {
-			if(result.name === "Disconnect" && timeout > 0){
-				showTimeout(timeout, "Reconnecting...");
-			}			
 		}
-
+		
+		if(result.name === "Disconnect"){
+				showTimeout(timeout, "Reconnecting...");
+		} else if (result.timeout > 0 && (!achievements || achievements.length === 0)) {
+			showTimeout(result.timeout, "Fritspauze");				
+		}
+		
 		// Vibrate when a card is played
 		if (window && window.navigator && typeof window.navigator.vibrate === 'function') {
 			window.navigator.vibrate(100);
@@ -237,7 +235,7 @@ function switchLanguage(){
 		flag.removeClass('fr')
 		flag.addClass('nl')
 	}
-
+  
 	if (lastDeck) {
 		showDeck(lastDeck);
 		showHand(lastCards);

@@ -85,6 +85,9 @@ function showHand(cards){
 		let startAt;
 		let activeAtStart = false;
 		elem.on('touchstart', function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
 			useTouch = true;
 			startAt = (new Date()).getTime();
 			// Reset transition from previous drag
@@ -111,6 +114,9 @@ function showHand(cards){
 			if (!touch) {
 				return;
 			}
+
+			e.preventDefault();
+			e.stopPropagation();
 
 			const x = touch.pageX - touchStartX;
 			const y = touch.pageY - touchStartY;
@@ -177,6 +183,13 @@ function showHand(cards){
 		hand.append(elem);
 	}
 }
+
+// When a touch event has not been handled by the card deck,
+// and has bubbled to the root, cancel it to prevent overscroll
+document.addEventListener('touchmove', (e) => {
+	e.preventDefault();
+	e.stopPropagation();
+}, {passive: false})
 
 function select(card) {
 	if (useTouch) {

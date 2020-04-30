@@ -37,7 +37,8 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 	}
 
 	if(result){
-		queueMessage(result.description, timeout);
+		var to = timeout > 0 ? timeout : result.timeout
+		queueMessage(result.description, to);
 
 		if(result.value !== 0){
 			$("#vuilefrits").hide();

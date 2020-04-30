@@ -24,7 +24,8 @@ var queueNumber = 1;
 const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 10000;
-const disconnectTimeout = 20000;
+const disconnectTimeout = 9000;
+const turnTime = 99000;
 const startHand = 5;
 const maxParticipants = 6;
 
@@ -61,11 +62,11 @@ function onDisconnect(){
 	var matchId = player.matchId;
 	if(matchId){
 		var match = matches[matchId];
+		var result = getRule("Disconnect", player.name);
 		if(match && !checkWin(match, player, result)){
 			match.state = "disconnect";
 			player.disconnect = true;
 			timeout = disconnectTimeout;
-			var result = getRule("Disconnect", player.name);
 			
 			setTimeout(function(){
 				console.log("onDisconnect: timeout expired ", match);
@@ -74,7 +75,6 @@ function onDisconnect(){
 						var p = players[id];
 						if(p) p.done = true;
 					});
-					player.done = false;
 					checkWin(match, player, result);
 				}				
 			}, disconnectTimeout);			
@@ -389,6 +389,9 @@ function getQueue(){
 }
 
 function updateCards(match, result, timeout, achievements) {
+	if(!match || !match.piles) {
+		return
+	}
 	var piles = [];
 	for (var i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
@@ -422,6 +425,10 @@ function updateCards(match, result, timeout, achievements) {
 }
 
 function getAchievements(match, result) {
+	if(!match || !match.piles) {
+		return
+	}
+	
 	var piles = match.piles;
 	var newAchievements = []
 
@@ -527,7 +534,11 @@ function getAchievements(match, result) {
 	return newAchievements;
 }
 
-function nextPlayer(match){	
+function nextPlayer(match){
+	if(!match || !match.playerIds) {
+		return
+	}
+	
 	var index = match.playerIds.indexOf(match.turnId);
 
 	var next = (index + 1) % match.playerIds.length;	
@@ -539,10 +550,21 @@ function nextPlayer(match){
 		nextPlayer(match);
 	} else {
 		p.turnCount++;
+		if(match.turnTimer) {
+			clearTimeout(match.turnTimer);
+		}
+		
+		match.turnTimer = setTimeout(function(){
+			skipTurn(match, p);			
+		}, turnTime);
 	}
 }
 
 function checkWin(match, player, result){
+	if(!match || !match.playerIds) {
+		return
+	}
+	
 	console.log('checkWin: match=',match);
 	var inGame = 0;
 	var loserName = player.name;
@@ -558,13 +580,24 @@ function checkWin(match, player, result){
 		var achievements = getAchievements(match, result);
 		updateCards(match, result, 0, achievements);
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
-		removeMatch(player.matchId);
+		removeMatch(player.matchId);		
+		
 		console.log("checkWin: removed match=" , match);
 		return true;
 	}
 	return false;
 }
 
+function skipTurn(match, player){
+	if(!match || !match.playerIds || match.playerIds.length < 2) {
+		return;
+	}
+	
+	drawCards(player.cards, match.deck, 2);
+	match.frits = false;
+	nextPlayer(match);
+	return updateCards(match, getRule("BeurtOver", player.name));
+}
 
 // ID FUNCTIONS
 
@@ -586,9 +619,13 @@ function findMatchBySocketId(socketId) {
 }
 
 function removeMatch(matchId) {
+	var match = matches[matchId];
+	for (var key in match) {
+		delete match[key];
+	}
+	
 	delete matches[matchId];
 }
-
 
 //Card Games
 var Suits = Object.freeze({"Clubs":"C", "Hearts":"H", "Spades":"S", "Diamonds":"D", "Red": "R", "Black":"B"})
@@ -681,6 +718,7 @@ var Rules = [
 	new Rule("Goed", " heeft een kaart opgelegd", 2, 0),
 	new Rule("Update", "", 0, 0),
 	new Rule("Start", "", 2, 0),
+	new Rule("BeurtOver", " - Beurt duurt langer dan " + (turnTime/1000) + " seconden: Sla beurt over, neem 2 kaarten en neem 1 fritsje", 2, 2500),
 	new Rule("Offer", " - Offerfrits: Neem 1 fritsje", 1, 2500),
 	new Rule("Joker", " - Joker: Alle anderen nemen 1 fritsje", 1, 9000),
 	new Rule("Kim", " - Kim: Alle anderen nemen 1 fritsje", 1, 9000),

@@ -5,7 +5,7 @@ function showDeck(nrCards){
 	nrCards /= 3;
 
 	for (i = 0; i < nrCards; i++) { 
-		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.png'/>";
+		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.svg'/>";
 		deck.append(card);
 	}
 }
@@ -38,7 +38,7 @@ function showPiles(piles, frits, lastmove){
 	
 		for (var j = 0; j < pile.length; j++) {
 			var c = pile[j];
-			var img = "<img class='card' src='" + getCardsUrl() + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
+			var img = "<img class='card' src='" + getCardsUrl() + c + ".svg' style=\"margin-top:" + (j*0.4) + "%\"/>";
 			p.append(img);
 		}
 		p.click(function() {
@@ -72,7 +72,7 @@ function showHand(cards){
 
 		const elem = $('<img>')
 			.attr('id', 'card'+i)
-			.attr('src', getCardsUrl() + card + '.png')
+			.attr('src', getCardsUrl() + card + '.svg')
 			.addClass('cardblock')
 			.css('margin-top', topMargin+'%')
 			.css('margin-left', leftMargin+'%')

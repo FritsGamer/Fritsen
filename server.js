@@ -97,7 +97,7 @@ function onDisconnect(){
 function joinQueue(socketId, name) {
 	console.log("joinQueue: joinQueue: " + socketId + " - " + name);
 	var player = players[socketId];
-	if(!player) return;	
+	if(!player) return;
 
 	if(tryReconnectPlayer(player, socketId, name)) return;
 
@@ -117,7 +117,7 @@ function joinQueue(socketId, name) {
 	console.log("joinQueue: join handled");
 }
 
-function tryReconnectPlayer(player, socketId, name){	
+function tryReconnectPlayer(player, socketId, name){
 	for(matchId in matches){
 		var match = matches[matchId];
 		var disconnectId = "";
@@ -233,23 +233,24 @@ function playCard(socketId, cardId, pileId) {
 	var match = findMatchBySocketId(socketId);
 	var player = players[socketId];
 	if(!match || !player) return;
-	
-	if(match.state === "timeout" || match.state === "disconnect")
-		return;
-	
-	if (match.state === "vuileFrits") {	
-		return updateCards(match, getRule("DesVuil", player.name));		
+
+	if (match.state === "timeout" || match.state === "disconnect") {
+		return updateCards(match, getRule("DesBeurt", player.name));
+	}
+
+	if (match.state === "vuileFrits") {
+		return updateCards(match, getRule("DesVuil", player.name));
 	}
 
 	var hand = player.cards;
 	var piles = match.piles;
 
 	if (cardId >= hand.length || pileId >= piles.length) {
-		return updateCards(match, getRule("Fout", player.name));		
+		return updateCards(match, getRule("Fout", player.name));
 	}
 
 	if ((match.state === "playing" && match.turnId !== socketId)) {
-		return updateCards(match, getRule("DesBeurt", player.name));		
+		return updateCards(match, getRule("DesBeurt", player.name));
 	}
 
 	var result = placeOnPile(cardId, pileId, match, hand, socketId, player);
@@ -292,7 +293,7 @@ function playCard(socketId, cardId, pileId) {
 				updateCards(match, getRule("Update", false));
 			}, baudetTime);
 		} else {
-			nextPlayer(match);			
+			nextPlayer(match);
 		}
 	}
 	
@@ -308,9 +309,9 @@ function fritsCards(){
 		return;
 	
 	if (match.state === "vuileFrits") {
-		return updateCards(match, getRule("DesVuil", player.name));			
+		return updateCards(match, getRule("DesVuil", player.name));
 	}
-	
+
 	if(!match.frits && match.state === "playing" && match.turnId === this.id){
 		drawCards(player.cards, match.deck, 2);
 		match.frits = true;	
@@ -373,15 +374,15 @@ function playersInMatch() {
 function updateCardsForPlayer(){
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];
-	
+
 	if(!match || !player) return;
-	
+
 	var piles = [];
 	for (var i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
 		piles.push(asStrings);
-	}	
-	
+	}
+
 	var cardStrings = player.cards.map(c => Identities[c.identity] + Suits[c.suit]);
 	io.to(this.id).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove);
 }
@@ -423,18 +424,18 @@ function updateCards(match, result, timeout, achievements) {
 			io.to(playerId).emit("update cards", cardStrings, match.deck.length, piles, match.frits, match.lastMove, result, timeout, achievements);
 		}
 	}
-	
+
 	if(result && result.timeout > 0){
 		match.state = "timeout";
 		timeout = result.timeout;
-		
-		setTimeout(function(){ 
+
+		setTimeout(function(){
 			if(match.state === "timeout"){
-				match.state = "playing"; 
-			}				
+				match.state = "playing";
+			}
 		}, result.timeout);
 	}
-	console.log("updateCards: cards updated");	
+	console.log("updateCards: cards updated");
 }
 
 function getAchievements(match) {

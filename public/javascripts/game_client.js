@@ -208,6 +208,10 @@ function showAchievement() {
 		$('#achievement-text').text(achievement.text);
 		$('#achievement-container').fadeIn();
 
+		var audioElements = $("#achievement-sounds > audio")
+		var random = Math.floor(Math.random() * audioElements.length)
+		audioElements[random].play()
+
 		setTimeout(function(){ 
 			$('#achievement-container').fadeOut(500, () => {
 				showingAchievements = false;

@@ -5,7 +5,7 @@ function showDeck(nrCards){
 	nrCards /= 3;
 
 	for (i = 0; i < nrCards; i++) { 
-		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='../images/cards/CR.png'/>";
+		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.png'/>";
 		deck.append(card);
 	}
 }
@@ -14,12 +14,12 @@ function showPiles(piles, frits, lastmove){
 	var pilesDiv = $("#piles");
 	pilesDiv.empty();
 
-	for (i = 0; i < piles.length; i++) { 
+	for (let i = 0; i < piles.length; i++) {
 		var pile = piles[i];
 		var div = "<div id='pile" + i + "' class='cardblock pile'></div>";
-		var p = $(div);
+		const p = $(div);
 		
-		if(pile.length > 0 || frits || i == 0) p.addClass("open");
+		if(pile.length > 0 || frits || i === 0) p.addClass("open");
 		if(i == 0){ 
 			p.addClass("joker");
 		}else{
@@ -29,12 +29,16 @@ function showPiles(piles, frits, lastmove){
 			p.css("margin-top", mtop + "%");
 			p.css("margin-left", mleft + "%");
 		}
-		if(i == lastmove) p.addClass("lastmove");
-		if(pile.length == 0) p.addClass("empty");
+		if (i == lastmove){
+			p.addClass("lastmove");
+		}
+		if (pile.length == 0) {
+			p.addClass("empty");
+		}
 	
-		for (j = 0; j < pile.length; j++) { 
+		for (var j = 0; j < pile.length; j++) {
 			var c = pile[j];
-			var img = "<img class='card' src='../images/cards/" + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
+			var img = "<img class='card' src='" + getCardsUrl() + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
 			p.append(img);
 		}
 		p.click(function() {
@@ -44,6 +48,8 @@ function showPiles(piles, frits, lastmove){
 	}
 }
 
+
+var useTouch = false;
 function showHand(cards){
 	var hand = $("#hand");
 	hand.empty();
@@ -53,8 +59,8 @@ function showHand(cards){
 	var firstRowTop = singleRow ? 0 : -8;
 	var secondRowTop = 5;
 
-	for (i = 0; i < cards.length; i++) { 
-		c = cards[i];
+	for (let i = 0; i < cards.length; i++) {
+		const card = cards[i];
 		var topMargin, leftMargin;
 		if(i < firstRow){
 			topMargin = firstRowTop;
@@ -64,12 +70,119 @@ function showHand(cards){
 			leftMargin = -4 * (cards.length - firstRow) + 8 * (i - firstRow);
 		}
 
-		elem = "<img id='card" + i + "' class='cardblock' style='margin-top:" + topMargin + "%; margin-left:" + leftMargin + "%' src='../images/cards/" + c + ".png' onclick='select(this)' />";
+		const elem = $('<img>')
+			.attr('id', 'card'+i)
+			.attr('src', getCardsUrl() + card + '.png')
+			.addClass('cardblock')
+			.css('margin-top', topMargin+'%')
+			.css('margin-left', leftMargin+'%')
+			.click(function () {
+				select(this);
+			});
+
+		// Add drag and drop handling
+		let touchStartX, touchStartY, cardStartX, cardStartY;
+		let startAt;
+		let activeAtStart = false;
+		elem.on('touchstart', function (e) {
+			useTouch = true;
+			startAt = (new Date()).getTime();
+			// Reset transition from previous drag
+			elem.css('transition', '');
+
+			// Save start touch location
+			const touch = e.originalEvent.changedTouches[0];
+			touchStartX = touch.pageX;
+			touchStartY = touch.pageY;
+
+			// Save starting position of the card
+			const rect = e.target.getBoundingClientRect();
+			cardStartX = rect.left;
+			cardStartY = rect.top;
+
+			// Highlight open piles
+			activeAtStart = elem.hasClass('active');
+			$('#piles .pile.open').addClass('active');
+			$('#hand .cardblock').removeClass('active'); // Deselect other cards
+			elem.addClass('active');
+		});
+		elem.on('touchmove', function (e) {
+			const touch = e.originalEvent.changedTouches[0];
+			if (!touch) {
+				return;
+			}
+
+			const x = touch.pageX - touchStartX;
+			const y = touch.pageY - touchStartY;
+			elem.css('transform', 'translate('+x+'px, '+y+'px)');
+		})
+
+		const reset = function () {
+			// Animate back to the original location
+			elem.css('transition', 'transform 300ms ease-in-out');
+			elem.css('transform', 'translate(0, 0)');
+
+			// Remove highlights of open piles
+			const now = (new Date()).getTime();
+			if (now-startAt < 200) {
+				// Assume this is a cancelled drag, and not a tap
+				if (activeAtStart) {
+					elem.removeClass('active');
+					$('.open').removeClass('active');
+				} else {
+					elem.addClass('active');
+					$('.open').addClass('active');
+				}
+			}
+		}
+		elem.on('touchend', function (e) {
+			const touch = e.originalEvent.changedTouches[0];
+			const targetX = touch.pageX;
+			const targetY = touch.pageY;
+
+			// Search for a target pile
+			let found = false;
+			$(".pile").each(function() {
+				const pile = $(this);
+				if (!pile.hasClass('open')) {
+					return;
+				}
+				const rect = this.getBoundingClientRect();
+
+				// Continue when outside bounding box
+				if (targetX < rect.left || targetX > rect.right || targetY < rect.top || targetY > rect.bottom) {
+					return;
+				}
+
+				found = true;
+
+				// Animate to the pile
+				elem.css('transition', 'transform 100ms ease-in-out');
+				elem.css('transform', 'translate('+(rect.left - cardStartX)+'px, '+(rect.top - cardStartY)+'px)');
+
+				// Place the card after the animation
+				setTimeout(function () {
+					placeCard(pile);
+				}, 300);
+			});
+
+			// No pile found, reset to deck
+			if (!found) {
+				reset();
+			}
+		});
+		// Cancelled, reset to deck (dragged outside screen or something)
+		elem.on('touchcancel', reset);
+
 		hand.append(elem);
 	}
 }
 
 function select(card) {
+	if (useTouch) {
+		return;
+	}
+
 	var selected = $(card);
 	if (selected.hasClass('active')) {
 		selected.removeClass('active');
@@ -82,15 +195,21 @@ function select(card) {
 }
 
 function placeCard(pile) {
-	if (!pile.hasClass('open'))
-	  return;
-
-	var selected = $('#hand .active');	
-	if (selected.length != 1)
-	  return;
+	var selected = $('#hand .active');
+	if (selected.length != 1) {
+		return;
+	}
 
 	var selectedCard = selected[0];
 	var selectedPile = pile[0];
 
 	playCard(selectedCard.id, selectedPile.id)
+}
+
+function getCardsUrl() {
+	if ($('#lang-flag').hasClass('fr')){
+		return '../images/cards/fr/';
+	}
+	
+	return '../images/cards/en/';
 }

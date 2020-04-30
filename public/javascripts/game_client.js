@@ -1,29 +1,64 @@
-
 var socket = io();
-var canPlayCard = false;
 var canVuileFrits = true;
 var started = false;
 var timeOutId = false;
+var localAchievements = [];
+var showingAchievements = false;
+var playerNamesShown = false;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, turnPlayer, result) {
+var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
+
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
+	if(result && result.name === "Reconnected"){
+		startGame();
+		$("#queue-image").show();
+		$("#rules-image").show();
+		socket.emit("playerNames")
+		$('#timeout-container').hide();
+	}
+	
+	// Save state to be able to redraw cards when you click the flag
+	lastDeck = deck;
+	lastCards = cards;
+	lastPiles = piles;
+	lastFrits = frits;
+	lastLastmove = lastmove;
+
 	showDeck(deck);
 	showHand(cards);
 	showPiles(piles, frits, lastmove);
 	
-	if(result){
-		if(result.value < 2) setMessage(result.description);
-		
-		if(result.value > 0){
-			$("#vuilefrits").hide();
-			canVuileFrits = false;
+	if (achievements && achievements.length > 0) {
+		achievements.forEach((achievement) => {
+			localAchievements.push(achievement);
+		})
 
-			if(result.name == "Baudet"){
-				next = false;
-				setTurn(turnPlayer, false);
+		showAchievement();
+	}
+
+	if(result){
+		queueMessage(result.description, timeout);
+
+		if(result.value !== 0){
+			$("#vuilefrits").hide();
+
+			if(result.name === "Baudet"){
 				$('#turn').text("Baudet");
-			}else
-				setTurn(turnPlayer, true);
+			} else {		
+				$('#turn').text("");		
+			}
 		}
+		
+		if(result.name === "Disconnect"){
+				showTimeout(timeout, "Reconnecting...");
+		} else if (result.timeout > 0 && (!achievements || achievements.length === 0)) {
+			showTimeout(result.timeout, "Fritspauze");				
+		}
+		
+		// Vibrate when a card is played
+		if (window && window.navigator && typeof window.navigator.vibrate === 'function') {
+			window.navigator.vibrate(100);
+		}		
 	}
 });
 
@@ -32,11 +67,10 @@ socket.on("queue", function(players) {
 	queue.empty();
 	for(var i = 0; i < players.length; i++){
 		var player = players[i];
-		
 
-		var line = "<div>&gt; " + player.name + "</div>";
-		var p = $(line);
-		if(player.id == socket.id){		
+
+		var p = $("<div>").text('> '+player.name);
+		if(player.id == socket.id){
 			p.addClass('ownname');
 			
 			if(i == 0)
@@ -49,21 +83,37 @@ socket.on("queue", function(players) {
 	}
 });
 
-socket.on("match started", function(turnPlayer) {
-	canPlayCard = false;
+socket.on("match started", function() {
 	canVuileFrits = true;
+	queueMessage('Iedereen mag nu vuile fritsen',9000)
 	startGame();
-	setTurn(turnPlayer, true);
+	$("#queue-image").show();
+	$("#rules-image").show();
+	$("#lang-flag").show()
+
+	setTimeout(() => {
+		socket.emit("playerNames")
+	}, 10000)	
 });
 
-
 socket.on("game over", function(name) {
-	$("#turn").text(name + " heeft verloren en moet 2 fritsjes nemen");
-	// setMessage("Game is over\n" + name + " lost the game");
-	setTimeout(function(){ resetGame(); }, 5000);
+	queueMessage(name + " heeft verloren en moet 2 fritsjes nemen")
+	setTimeout(function(){ resetGame(); }, 10000);
+});
+
+socket.on("playerNames", function(names) {
+	var timeout = 10000;
+	queueMessage(names.join(' ➡️ '), timeout);
+
+	setTimeout(() => {
+		playerNamesShown = false;
+	}, timeout);
 });
 
 function resetGame(){
+	$("#lang-flag").hide()
+	$("#queue-image").hide();
+	$("#rules-image").hide();
 	$("#hand").empty();
 	$("#deck").empty();
 	$("#piles").empty();
@@ -76,9 +126,7 @@ function enterQueue(name){
 }
 
 function frits() {
-	if (canPlayCard){
-		socket.emit("frits");
-	}
+	socket.emit("frits");
 }
 
 function vuileFrits() {
@@ -97,46 +145,100 @@ function startMatch() {
 	socket.emit("startMatch");
 }
 
-function setMessage(msg){
-	var message = $('#status');
-	message.text(msg);
-	
-	if(timeOutId){
-		clearTimeout ( timeOutId );
-	}else{
-		message.fadeIn();
-	}
-	timeOutId = setTimeout(function(){
-		message.fadeOut();
-		timeOutId = false;
-	}, 3000);
-}
-
-function setTurn(player, next){
-	var turnField = $('#turn');
-	if(!player){
-		turnField.text("Iedereen mag nu vuile fritsen");
+function getPlayerNames() {
+	if (playerNamesShown) {
 		return;
 	}
 
-	if(socket.id === player.id)
-		canPlayCard = next;
-	else
-		canPlayCard = !next;
-	
+	playerNamesShown = true;
+	socket.emit("getPlayerNames")
+}
 
-	if(canPlayCard){
-		turnField.text("Het is jouw beurt!");
-	}else{
-		var numCards = player.cards == 1 ? "laatste frits!" :  ("nog " + player.cards + " kaarten");
-		turnField.text(player.name + " is aan de beurt en heeft " + numCards);
+function openRulePDF(url) {
+	var win = window.open('https://fritsen.app', '_blank');
+	win.focus();
+  }
+
+function queueMessage(msg, timeout){
+	if (!msg) {
+		return
 	}
+
+	var notifications = $('#notifications-container');
+	var notification = $("<div>").addClass('notification')
+	var message = $("<div>").addClass('notification-text').text(msg);
+	var counter = $("<div>").addClass('notification-count');
+
+	notifications.append(notification)
+	notification.append(message)
+	notification.append(counter)
+
+	var showNext = function(count) {
+		if (count === 0) {
+			notification.fadeOut()
+			return;
+		}
+
+		counter.text(count);
+
+		setTimeout(function(){
+			showNext(count - 1)
+		}, 1000);
+	}
+
+	notification.fadeIn();
+
+	timeout = timeout || 5000
+	showNext(Math.floor(timeout/1000));	
 }
 
 function playCard(card, pile) {	
 	var cardNum = parseInt(card.replace(/\D/g,''));
 	var pileNum = parseInt(pile.replace(/\D/g,''));
-	if (canPlayCard && Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
+	if (Number.isInteger(cardNum) && Number.isInteger(pileNum)) {
 		socket.emit("playCard", cardNum, pileNum);
+	}
+}
+
+function showAchievement() {
+	if (!showingAchievements && localAchievements.length > 0) {
+		var achievement = localAchievements.shift();
+
+		$('#achievement-by').text(achievement.by);
+		$('#achievement-text').text(achievement.text);
+		$('#achievement-container').fadeIn();
+
+		setTimeout(function(){ 
+			$('#achievement-container').fadeOut(500, () => {
+				showingAchievements = false;
+				showAchievement()
+			})
+		}, 2500);
+	} 
+}
+
+function showTimeout(timeout, message) {
+	$('#timeout-text').text(message);
+	$('#timeout-container').fadeIn();
+
+	setTimeout(function(){ 
+		$('#timeout-container').fadeOut(500, () => {})
+	}, timeout);
+}
+
+function switchLanguage(){
+	var flag = $('#lang-flag');
+	if (flag.hasClass('nl')) {
+		flag.removeClass('nl')
+		flag.addClass('fr')
+	} else {
+		flag.removeClass('fr')
+		flag.addClass('nl')
+	}
+  
+	if (lastDeck) {
+		showDeck(lastDeck);
+		showHand(lastCards);
+		showPiles(lastPiles, lastFrits, lastLastmove);
 	}
 }

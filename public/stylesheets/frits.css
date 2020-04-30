@@ -1,16 +1,24 @@
 html{
-	font-family:sans-serif;
-	-webkit-text-size-adjust:100%;
-	-ms-text-size-adjust:100%
+  font-family:sans-serif;
+  -webkit-text-size-adjust:100%;
+  -ms-text-size-adjust:100%;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 body{
-	margin: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .table-image{
   background-image: url("../images/Table.jpg");
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   background-repeat: no-repeat;
   background-size: cover;
   position: relative;
@@ -18,13 +26,101 @@ body{
 
 .board-image {
   background-image: url("../images/Snijplank.png");
-  height: 60vh;
-  width: 90vh;
+  height: 60vmin;
+  width: 90vmin;
   top: 18%;
   background-repeat: no-repeat;
   background-size: cover;
   position: relative;
   margin: auto;
+}
+
+#queue-image {
+  background-image: url("../images/queue.png");
+  background-size: 14vmin;
+  height: 20vmin;
+  width: 20vmin;
+  bottom: 0;
+  left: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  margin: auto;
+  color: white;
+  display: none;
+}
+
+#rules-image {
+  background-image: url("../images/rules.png");
+  background-size: 14vmin;
+  height: 20vmin;
+  width: 20vmin;
+  bottom: 0;
+  left: 18vmin;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  margin: auto;
+  color: white;
+  display: none;
+}
+
+.boardMessage {
+  border-radius: 1vmin;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background-color: #00000088;
+  display: none;
+}
+
+.boardMessage .text {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  color: white;
+  font-size: 10vmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;	
+}
+
+.star {
+  position: absolute;
+  color: gold;
+  font-size: 10vmin;
+}
+
+#star-top-left {
+  top: 3vmin;
+  left: 3vmin;
+}
+
+#star-top-right {
+  top: 3vmin;
+  right: 3vmin;
+}
+
+#star-bottom-left {
+  bottom: 3vmin;
+  left: 3vmin;
+}
+
+#star-bottom-right {
+  bottom: 3vmin;
+  right: 3vmin;
+}
+
+#achievement-by {
+  position: absolute;
+  top: 4.5vmin;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 10vmin;
 }
 
 #playerName {
@@ -36,7 +132,7 @@ body{
     width: 46%;
     text-align: center;
     height: 12%;
-    font-size: 6vh;
+    font-size: 6vmin;
     color: white;
 }
 
@@ -55,13 +151,6 @@ body{
     left: 33%;
     height: 19%;
     width: 34%;
-}
-
-@media all and (orientation: portrait) {
-  .board-image {
-    height: 60vw;
-    width: 90vw;
-  }
 }
 
 .cardblock{
@@ -96,18 +185,60 @@ body{
 }
 
 .pile.joker {
-  top: 40%;
+  top: 34%;
   left: 6%;
 }
 
+.pile.lastmove {
+  box-shadow: 0 0 0.6vmin 0.3vmin green;
+}
+
 .active {
-  outline: 0.4vh solid blue;
+  box-shadow: 0 0 0.6vmin 0.3vmin blue;
 }
 
 .pile.empty.active {
   display: block;
-  outline: none;
+  box-shadow: none;
   background: rgba(255,255,255,0.3);
+}
+
+#notifications-container {
+  position: absolute;
+  top: 1vmin;
+  left: 1vmin;
+  right: 1vmin;
+  display: flex;
+  justify-content: start;
+  flex-direction: column;
+}
+
+.notification {
+  position: relative;
+  padding: 1.5vmin;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  background-color: #00000088;
+  border-radius: 2vmin;
+  margin-bottom: 1vmin;
+}
+.notification-text {
+  flex: 1;
+  color: white;
+  font-size: 4vmin;
+  display: flex;
+  align-items: center;
+}
+
+.notification-count {
+  width: 10vmin;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  font-size: 4vmin;
+  align-items: center;
+  justify-content: center;
 }
 
 .message {
@@ -120,8 +251,14 @@ body{
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 4vh;
+  font-size: 4vmin;
   color: darkgrey;
+}
+@media all and (orientation: portrait) {
+  .message {
+    left: 0vw;
+    width: 100%;
+  }
 }
 
 #turn {
@@ -136,7 +273,7 @@ body{
   width: 100%;
   position: relative;
   text-align: center;
-  font-size: 7vh;
+  font-size: 7vmin;
   color: white;
 }
 
@@ -146,37 +283,12 @@ body{
   width: 80%;
   position: absolute;
   text-align: left;
-  font-size: 6vh;
+  font-size: 6vmin;
   color: white;
 }
 
 .ownname{
-  color: red;	
-}
-
-
-@media all and (orientation: portrait) {
-  .message {
-    font-size: 4vw;
-    left: 0vw;
-    width: 100%;
-  }
-
-  #playerName {
-	font-size: 6vw;
-  }
-
-  #waiting{
-	font-size: 7vw;
-  }
-
-  #players{ 
-	font-size: 6vw;  	
-  }
-
-  .active {
-    outline: 0.4vw solid blue;
-  }
+  color: red;
 }
 
 .button {
@@ -220,3 +332,26 @@ body{
   left: 3%;
 }
 
+#lang-flag {
+  display: none;
+}
+
+.flag{
+    display: block;
+    position: absolute;
+    background-size: 100% 100%;
+    background-color: transparent;
+    border: none;
+    top: -14%;
+    left: 92%;
+    height: 6%;
+    width: 6%;
+}
+
+.flag.nl{
+    background-image: url(../images/language/nl.png);
+}
+
+.flag.fr{
+    background-image: url(../images/language/fr.png);
+}

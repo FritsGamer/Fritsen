@@ -70,5 +70,8 @@ node_modules
 ehthumbs.db
 Thumbs.db
 
-# Entire databae directory
+# Entire database directory
 data
+
+# IDEs
+.idea

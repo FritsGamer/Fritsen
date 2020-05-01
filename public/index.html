@@ -33,7 +33,7 @@
 			<div id="queue-image" onclick="getPlayerNames()"></div>
 			<div id="rules-image" onclick="openRulePDF()"></div>
 			<div class="board-image">
-				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
+				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false" autofocus>
 				<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
 
 				<div id="waiting" class="queue" hidden>Waiting for other players...</div>
@@ -85,6 +85,9 @@
 			});
 
 			function joinQueue(){
+				if (document.activeElement) {
+					document.activeElement.blur();
+				}
 				var name = $('#playerName').val();
 				if(name != ""){
 					$('.start').hide();

@@ -734,7 +734,7 @@ var Rules = [
 	new Rule("KlaverFout", " - Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0, 2500),
 	new Rule("DubbelNegen", " - Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1, 9000),
 	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1, 0),
-	new Rule("Frits", " heeft gefritst", 1, 2500),
+	new Rule("Frits", " heeft gefritst", 1, 1000),
 	new Rule("AlGefritst", " - Je hebt al gefritst, neem 1 fritsje des", 0, 2500),
 	new Rule("JokerUit", " - Je mag niet uitkomen met een Joker, neem 1 fritsje", 0, 2500),
 	new Rule("JokerFout", " - Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0, 2500),

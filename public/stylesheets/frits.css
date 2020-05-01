@@ -345,15 +345,15 @@ img.cardblock, img.card {
 }
 
 .flag{
-    display: block;
-    position: absolute;
-    background-size: 100% 100%;
-    background-color: transparent;
-    border: none;
-    top: -14%;
-    left: 92%;
-    height: 6%;
-    width: 6%;
+  display: block;
+  position: absolute;
+  bottom: 4vmin;
+  right: 4vmin;
+  background-size: 100% 100%;
+  background-color: transparent;
+  border: none;
+  height: 12vmin;
+  width: 18vmin;
 }
 
 .flag.nl{

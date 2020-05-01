@@ -223,7 +223,6 @@ img.cardblock, img.card {
 
 .notification {
   position: relative;
-  padding: 1.5vmin;
   box-sizing: border-box;
   display: flex;
   width: 100%;
@@ -231,12 +230,25 @@ img.cardblock, img.card {
   border-radius: 2vmin;
   margin-bottom: 1vmin;
 }
+
+.notification-by {
+  color: white;
+  font-size: 4vmin;
+  display: flex;
+  align-items: center;
+  background-color: grey;
+  padding: 2vmin 3vmin;
+  border-radius: 2vmin;
+}
+
 .notification-text {
   flex: 1;
   color: white;
   font-size: 4vmin;
   display: flex;
   align-items: center;
+  padding: 2vmin 0;
+  margin-left: 2vmin;
 }
 
 .notification-count {
@@ -247,6 +259,7 @@ img.cardblock, img.card {
   font-size: 4vmin;
   align-items: center;
   justify-content: center;
+  padding-right: 2vmin;
 }
 
 .message {

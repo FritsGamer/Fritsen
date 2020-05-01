@@ -391,6 +391,8 @@ function getQueue(){
 }
 
 function updateCards(match, result, timeout, achievements) {
+	console.log('result=',result)
+
 	if(!match || !match.piles) {
 		return
 	}
@@ -714,34 +716,34 @@ function Rule(name, description, value, timeout) {
 }
 
 var Rules = [
-	new Rule("DesBeurt", " - Fritsje des: Je bent niet aan de beurt", 0, 2500),
-	new Rule("DesVuil", " - Fritsje des: Je mag geen zet doen tijdens vuile fritsen", 0, 0),
-	new Rule("Fout", " - Fritsje des: Zet is niet mogelijk, neem 1 fritsje", 0, 2500),
-	new Rule("Goed", " heeft een kaart opgelegd", 2, 0),
+	new Rule("DesBeurt", "neemt een Fritsje des: je bent niet aan de beurt", 0, 2500),
+	new Rule("DesVuil", "neemt een Fritsje des: je mag geen zet doen tijdens het vuil fritsen", 0, 0),
+	new Rule("Fout", "neemt een Fritsje des: deze zet bestaat niet", 0, 2500),
+	new Rule("Goed", "heeft een kaart opgelegd", 2, 0),
 	new Rule("Update", "", 0, 0),
 	new Rule("Start", "", 2, 0),
-	new Rule("BeurtOver", " - Beurt duurt langer dan " + (turnTime/1000) + " seconden: Sla beurt over, neem 2 kaarten en neem 1 fritsje", 2, 2500),
-	new Rule("Offer", " - Offerfrits: Neem 1 fritsje", 1, 2500),
-	new Rule("Joker", " - Joker: Alle anderen nemen 1 fritsje", 1, 9000),
-	new Rule("Kim", " - Kim: Alle anderen nemen 1 fritsje", 1, 9000),
-	new Rule("VierdeKim", "Vierde Kim: Alle anderen nemen 2 fritsjes", 1, 9000),
-	new Rule("Joris", " - Jorisje: Alle anderen nemen 1 fritsje", 1, 9000),
-	new Rule("Lisa", " - Lisa: Alle anderen nemen 1 fritsje", 1, 9000),
-	new Rule("Baudet", " - Baudet: Ruil je hand met de stapel en neem 2 fritsjes", 1, 0),
-	new Rule("BaudetFout", " - Je kunt niet uitkomen met Baudet, neem 1 fritsje", 0, 2500),
-	new Rule("Klaver", " - Klaver! Je voorkomt dat Thierry aan de macht komt. De speler met Baudet mag niet ruilen", 1, 5000),
-	new Rule("Erik", " - Erikje! Je hebt jezelf geklaverd! neem zelf nog wel 2 fritsjes voor het spelen van Baudet", 1, 2500),
-	new Rule("KlaverFout", " - Je kunt nu alleen de klaveren 3 op de laatste 6 leggen", 0, 2500),
-	new Rule("DubbelNegen", " - Iedereen Dubbelfrits! Alle anderen nemen 2 fritsjes", 1, 9000),
+	new Rule("BeurtOver", "neemt een Fritsje des: zijn/haar Beurt duurt langer dan " + (turnTime/1000) + " seconden. Beurt is voorbij", 2, 2500),
+	new Rule("Offer", "heeft geofferfrits en neemt een Fritsje", 1, 2500),
+	new Rule("Joker", "Joker: andere spelers nemen een Fritsje", 1, 9000),
+	new Rule("Kim", "Kim: andere spelers nemen een Kimmetje", 1, 9000),
+	new Rule("VierdeKim", "Vierde Kim: andere spelers nemen een dubbele Kim", 1, 9000),
+	new Rule("Joris", "Joris: andere spelers nemen een Jorisje", 1, 9000),
+	new Rule("Lisa", "Lisa: andere spelers nemen een Lisaatje", 1, 9000),
+	new Rule("Baudet", "heeft nieuwe kaarten gekregen en moet een Thierry'tje nemen", 1, 0),
+	new Rule("BaudetFout", "neemt een Fritsje des: je mag niet uitfrisen met een 6 op een vrouw", 0, 2500),
+	new Rule("Klaver", "voorkomt dat Thierry aan de macht komt: De speler met Baudet mag niet ruilen", 1, 5000),
+	new Rule("Erik", "neemt een Erikje: hij/zij heeft zichzelf geklaverd! ", 1, 2500),
+	new Rule("KlaverFout", "heeft een gethierry't: je kan nu de klaveren 3 op de opgelegde 6 leggen", 0, 2500),
+	new Rule("DubbelNegen", "Iedereen Dubbelfrits! Andere spelers moeten Dubbelfritsen", 1, 9000),
 	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1, 0),
-	new Rule("Frits", " heeft gefritst", 1, 1000),
-	new Rule("AlGefritst", " - Je hebt al gefritst, neem 1 fritsje des", 0, 2500),
-	new Rule("JokerUit", " - Je mag niet uitkomen met een Joker, neem 1 fritsje", 0, 2500),
-	new Rule("JokerFout", " - Jokers mogen alleen op de jokerstapel, neem 1 fritsje", 0, 2500),
-	new Rule("Uit", " is uitgefritst. ", 1, 0),
-	new Rule("VuileFrits", " heeft een vuile frits gedaan", 0, 0),
-	new Rule("Disconnect", " heeft het spel verlaten", 0, 0),
-	new Rule("Reconnected", " heeft het spel weer gejoined", 0, 0),
+	new Rule("Frits", "heeft gefritst", 1, 1000),
+	new Rule("AlGefritst", "neemt een Fritsje des: je hebt al gefritst", 0, 2500),
+	new Rule("JokerUit", "neemt een Fritsje des: je mag niet uitfritsen met een joker", 0, 2500),
+	new Rule("JokerFout", "neemt een Fritsje des: jokers mogen alleen op de jokerstapel", 0, 2500),
+	new Rule("Uit", "is uitgefritst", 1, 0),
+	new Rule("VuileFrits", "is aan het vuil Fritsen", 0, 0),
+	new Rule("Disconnect", "heeft het spel verlaten", 0, 0),
+	new Rule("Reconnected", "heeft het spel weer gejoined", 0, 0),
 ];
 
 function getRule(name, playerName) {
@@ -750,7 +752,8 @@ function getRule(name, playerName) {
 	
 	if(playerName){
 		rule = JSON.parse(JSON.stringify(rule));
-		rule.description = playerName + rule.description;
+		rule.by = playerName;
+		rule.description = rule.description
 	}
 	
 	return rule;

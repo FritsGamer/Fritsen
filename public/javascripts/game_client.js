@@ -8,8 +8,8 @@ var playerNamesShown = false;
 
 var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, message, timeout, achievements) {
-	if(message && message.name === "Reconnected"){
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
+	if(result && result.name === "Reconnected"){
 		startGame();
 		$("#queue-image").show();
 		$("#rules-image").show();
@@ -36,32 +36,24 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, message,
 		showAchievement();
 	}
 
+	if(result){
+		var to = timeout > 0 ? timeout : result.timeout
+		queueMessage(result.description, to);
 
-	if(message){
-		var value = message.value;
-		var name = message.name;
-
-		if (!timeout) {
-			timeout = message.timeout
-		}
-
-		message.timeout = 0;
-		queueMessage(message);
-
-		if(value !== 0){
+		if(result.value !== 0){
 			$("#vuilefrits").hide();
 
-			if(name === "Baudet"){
+			if(result.name === "Baudet"){
 				$('#turn').text("Baudet");
 			} else {		
 				$('#turn').text("");		
 			}
 		}
 		
-		if(name === "Disconnect"){
-			showTimeout(timeout, "Reconnecting...");
-		} else if (message.timeout > 0 && (!achievements || achievements.length === 0)) {
-			showTimeout(message.timeout, "Fritspauze");				
+		if(result.name === "Disconnect"){
+				showTimeout(timeout, "Reconnecting...");
+		} else if (result.timeout > 0 && (!achievements || achievements.length === 0)) {
+			showTimeout(result.timeout, "Fritspauze");				
 		}
 		
 		// Vibrate when a card is played
@@ -94,9 +86,7 @@ socket.on("queue", function(players) {
 
 socket.on("match started", function() {
 	canVuileFrits = true;
-	const message = {}
-	message.description = 'Je mag nu vuil fritsen: klik op het doekje!'
-	queueMessage(message,9000)
+	queueMessage('Iedereen mag nu vuile fritsen',9000)
 	startGame();
 	$("#queue-image").show();
 	$("#rules-image").show();
@@ -108,18 +98,13 @@ socket.on("match started", function() {
 });
 
 socket.on("game over", function(name) {
-	const message = {}
-	message.description = "moet een Dubbele frits nemen: je hebt verloren"
-	message.to = name
-	queueMessage(message)
+	queueMessage(name + " heeft verloren en moet 2 fritsjes nemen")
 	setTimeout(function(){ resetGame(); }, 10000);
 });
 
 socket.on("playerNames", function(names) {
 	var timeout = 10000;
-	const message = {}
-	message.description = names.join(' ➡️ ')
-	queueMessage(message, timeout);
+	queueMessage(names.join(' ➡️ '), timeout);
 
 	setTimeout(() => {
 		playerNamesShown = false;
@@ -175,33 +160,27 @@ function openRulePDF(url) {
 	win.focus();
   }
 
-function queueMessage(message, timeout){
-	if (!message || !message.description) {
+function queueMessage(msg, timeout){
+	if (!msg) {
 		return
 	}
 
 	var notifications = $('#notifications-container');
 	var notification = $("<div>").addClass('notification')
-	var messageBy = $("<div>").addClass('notification-by').text(message.by);
-	var messageText = $("<div>").addClass('notification-text').text(message.description);
-	var messageCounter = $("<div>").addClass('notification-count');
+	var message = $("<div>").addClass('notification-text').text(msg);
+	var counter = $("<div>").addClass('notification-count');
 
 	notifications.append(notification)
-	if (!!message.by) {
-		notification.append(messageBy)
-	}
-	notification.append(messageText)
-	notification.append(messageCounter)
+	notification.append(message)
+	notification.append(counter)
 
 	var showNext = function(count) {
 		if (count === 0) {
-			notification.fadeOut(() => {
-				notification.remove()
-			})
+			notification.fadeOut()
 			return;
 		}
 
-		messageCounter.text(count);
+		counter.text(count);
 
 		setTimeout(function(){
 			showNext(count - 1)

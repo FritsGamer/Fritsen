@@ -189,7 +189,7 @@ function queueMessage(msg, timeout){
 
 	notification.fadeIn();
 
-	timeout = timeout || 5000
+	timeout = timeout > 5000 ? timeout : 5000;
 	showNext(Math.floor(timeout/1000));	
 }
 

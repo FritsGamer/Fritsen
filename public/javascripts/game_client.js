@@ -38,24 +38,23 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 		showAchievement();
 	}
 
-	if(result){
-		var to = timeout > 0 ? timeout : result.timeout;
-		queueMessage(result.description, to);
+	if(message){
+		queueMessage(message);
 
-		if(result.value !== 0){
+		if(message.value !== 0){
 			$("#vuilefrits").hide();
 
-			if(result.name === "Baudet"){
-				$("#turn").text("Baudet");
-			} else {
-				$("#turn").text("");
+			if(message.name === "Baudet"){
+				$('#turn').text("Baudet");
+			} else {		
+				$('#turn').text("");		
 			}
 		}
-
-		if(result.name === "Disconnect"){
+	
+		if(message.name === "Disconnect"){
 			showTimeout(timeout, "Reconnecting...");
-		} else if (result.timeout > 0 && (!achievements || achievements.length === 0)) {
-			showTimeout(result.timeout, "Fritspauze");
+		} else if (message.fritsPauzeTime > 0 && (!achievements || achievements.length === 0)) {
+			showTimeout(message.fritsPauzeTime, "Fritspauze");
 		}
 
 		// Vibrate when a card is played
@@ -88,8 +87,9 @@ socket.on("queue", function(players) {
 
 socket.on("match started", function() {
 	canVuileFrits = true;
-	queueMessage("Iedereen mag nu vuile fritsen",9000);
-	// eslint-disable-next-line no-undef
+	const message = {}
+	message.description = 'Je mag nu vuil fritsen: klik op het gele doekje!'
+	queueMessage(message,9000)
 	startGame();
 	$("#queue-image").show();
 	$("#rules-image").show();
@@ -101,13 +101,18 @@ socket.on("match started", function() {
 });
 
 socket.on("game over", function(name) {
-	queueMessage(name + " heeft verloren en moet 2 fritsjes nemen");
+	const message = {}
+	message.description = "Dubbele frits: je hebt verloren"
+	message.by = name
+	queueMessage(message)
 	setTimeout(function(){ resetGame(); }, 10000);
 });
 
 socket.on("playerNames", function(names) {
 	var timeout = 10000;
-	queueMessage(names.join(" ➡️ "), timeout);
+	const message = {}
+	message.description = names.join(' ➡️ ')
+	queueMessage(message, timeout);
 
 	setTimeout(() => {
 		playerNamesShown = false;
@@ -170,27 +175,33 @@ function openRulePDF() {
 	win.focus();
 }
 
-function queueMessage(msg, timeout){
-	if (!msg) {
-		return;
+function queueMessage(message, timeout){
+	if (!message || !message.description) {
+		return
 	}
 
-	var notifications = $("#notifications-container");
-	var notification = $("<div>").addClass("notification");
-	var message = $("<div>").addClass("notification-text").text(msg);
-	var counter = $("<div>").addClass("notification-count");
+	var notifications = $('#notifications-container');
+	var notification = $("<div>").addClass('notification')
+	var messageBy = $("<div>").addClass('notification-by').text(message.by);
+	var messageText = $("<div>").addClass('notification-text').text(message.description);
+	var messageCounter = $("<div>").addClass('notification-count');
 
-	notifications.append(notification);
-	notification.append(message);
-	notification.append(counter);
+	notifications.append(notification)
+	if (!!message.by) {
+		notification.append(messageBy)
+	}
+	notification.append(messageText)
+	notification.append(messageCounter)
 
 	var showNext = function(count) {
 		if (count === 0) {
-			notification.fadeOut();
+			notification.fadeOut(() => {
+				notification.remove()
+			})
 			return;
 		}
 
-		counter.text(count);
+		messageCounter.text(count);
 
 		setTimeout(function(){
 			showNext(count - 1);
@@ -199,7 +210,7 @@ function queueMessage(msg, timeout){
 
 	notification.fadeIn();
 
-	timeout = timeout > 5000 ? timeout : 5000;
+	timeout = timeout > 9000 ? timeout : 9000;
 	showNext(Math.floor(timeout/1000));
 }
 

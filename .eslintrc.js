@@ -18,6 +18,25 @@ module.exports = {
 		"ecmaVersion": 2018
 	},
 	"rules": {
+		"space-before-blocks" : [
+			"error"
+		],
+		"block-spacing" : [
+			"error"
+		],
+		"keyword-spacing" : [
+			"error"
+		],
+		"no-trailing-spaces": [
+			"error"
+		],
+		"brace-style" : [
+			"error"
+		],
+		"curly": [
+			"error",
+			"all"
+		],
 		"indent": [
 			"error",
 			"tab"

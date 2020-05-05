@@ -6,8 +6,8 @@ var playerNamesShown = false;
 
 var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
 
-socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, timeout, achievements) {
-	if(result && result.name === "Reconnected"){
+socket.on("update cards", function(cards, deck, piles, frits, lastmove, message, timeout, achievements) {
+	if (message && message.name === "Reconnected") {
 		// eslint-disable-next-line no-undef
 		startGame();
 		$("#queue-image").show();
@@ -38,20 +38,20 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 		showAchievement();
 	}
 
-	if(message){
+	if (message) {
 		queueMessage(message);
 
-		if(message.value !== 0){
+		if (message.value !== 0) {
 			$("#vuilefrits").hide();
 
-			if(message.name === "Baudet"){
-				$('#turn').text("Baudet");
-			} else {		
-				$('#turn').text("");		
+			if (message.name === "Baudet") {
+				$("#turn").text("Baudet");
+			} else {
+				$("#turn").text("");
 			}
 		}
-	
-		if(message.name === "Disconnect"){
+
+		if (message.name === "Disconnect") {
 			showTimeout(timeout, "Reconnecting...");
 		} else if (message.fritsPauzeTime > 0 && (!achievements || achievements.length === 0)) {
 			showTimeout(message.fritsPauzeTime, "Fritspauze");
@@ -67,18 +67,19 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, result, 
 socket.on("queue", function(players) {
 	var queue = $("#players");
 	queue.empty();
-	for(var i = 0; i < players.length; i++){
+	for (var i = 0; i < players.length; i++) {
 		var player = players[i];
 
 
 		var p = $("<div>").text("> "+player.name);
-		if(player.id == socket.id){
+		if (player.id == socket.id) {
 			p.addClass("ownname");
 
-			if(i == 0)
+			if (i == 0) {
 				$("#newgame").show();
-			else
+			} else {
 				$("#newgame").hide();
+			}
 
 		}
 		queue.append(p);
@@ -87,9 +88,10 @@ socket.on("queue", function(players) {
 
 socket.on("match started", function() {
 	canVuileFrits = true;
-	const message = {}
-	message.description = 'Je mag nu vuil fritsen: klik op het gele doekje!'
-	queueMessage(message,9000)
+	const message = {};
+	message.description = "Je mag nu vuil fritsen: klik op het gele doekje!";
+	queueMessage(message,9000);
+	// eslint-disable-next-line no-undef
 	startGame();
 	$("#queue-image").show();
 	$("#rules-image").show();
@@ -101,17 +103,19 @@ socket.on("match started", function() {
 });
 
 socket.on("game over", function(name) {
-	const message = {}
-	message.description = "Dubbele frits: je hebt verloren"
-	message.by = name
-	queueMessage(message)
-	setTimeout(function(){ resetGame(); }, 10000);
+	const message = {};
+	message.description = "Dubbele frits: je hebt verloren";
+	message.by = name;
+	queueMessage(message);
+	setTimeout(function() {
+		resetGame();
+	}, 10000);
 });
 
 socket.on("playerNames", function(names) {
 	var timeout = 10000;
-	const message = {}
-	message.description = names.join(' ➡️ ')
+	const message = {};
+	message.description = names.join(" ➡️ ");
 	queueMessage(message, timeout);
 
 	setTimeout(() => {
@@ -119,7 +123,7 @@ socket.on("playerNames", function(names) {
 	}, timeout);
 });
 
-function resetGame(){
+function resetGame() {
 	$("#lang-flag").hide();
 	$("#queue-image").hide();
 	$("#rules-image").hide();
@@ -132,7 +136,7 @@ function resetGame(){
 
 //////////  Functions
 // eslint-disable-next-line no-unused-vars
-function enterQueue(name){
+function enterQueue(name) {
 	socket.emit("joinQueue", name);
 }
 
@@ -143,11 +147,11 @@ function frits() {
 
 // eslint-disable-next-line no-unused-vars
 function vuileFrits() {
-	if(canVuileFrits){
+	if (canVuileFrits) {
 		socket.emit("vuileFrits");
 		$("#vuilefrits").addClass("wait");
 		canVuileFrits = false;
-		setTimeout(function(){
+		setTimeout(function() {
 			$("#vuilefrits").removeClass("wait");
 			canVuileFrits = true;
 		}, 2000);
@@ -175,35 +179,35 @@ function openRulePDF() {
 	win.focus();
 }
 
-function queueMessage(message, timeout){
+function queueMessage(message, timeout) {
 	if (!message || !message.description) {
-		return
+		return;
 	}
 
-	var notifications = $('#notifications-container');
-	var notification = $("<div>").addClass('notification')
-	var messageBy = $("<div>").addClass('notification-by').text(message.by);
-	var messageText = $("<div>").addClass('notification-text').text(message.description);
-	var messageCounter = $("<div>").addClass('notification-count');
+	var notifications = $("#notifications-container");
+	var notification = $("<div>").addClass("notification");
+	var messageBy = $("<div>").addClass("notification-by").text(message.by);
+	var messageText = $("<div>").addClass("notification-text").text(message.description);
+	var messageCounter = $("<div>").addClass("notification-count");
 
-	notifications.append(notification)
-	if (!!message.by) {
-		notification.append(messageBy)
+	notifications.append(notification);
+	if (message.by) {
+		notification.append(messageBy);
 	}
-	notification.append(messageText)
-	notification.append(messageCounter)
+	notification.append(messageText);
+	notification.append(messageCounter);
 
 	var showNext = function(count) {
 		if (count === 0) {
 			notification.fadeOut(() => {
-				notification.remove()
-			})
+				notification.remove();
+			});
 			return;
 		}
 
 		messageCounter.text(count);
 
-		setTimeout(function(){
+		setTimeout(function() {
 			showNext(count - 1);
 		}, 1000);
 	};
@@ -235,7 +239,7 @@ function showAchievement() {
 		var random = Math.floor(Math.random() * audioElements.length);
 		audioElements[random].play();
 
-		setTimeout(function(){
+		setTimeout(function() {
 			$("#achievement-container").fadeOut(500, () => {
 				showingAchievements = false;
 				showAchievement();
@@ -248,13 +252,13 @@ function showTimeout(timeout, message) {
 	$("#timeout-text").text(message);
 	$("#timeout-container").fadeIn();
 
-	setTimeout(function(){
+	setTimeout(function() {
 		$("#timeout-container").fadeOut(500, () => {});
 	}, timeout);
 }
 
 // eslint-disable-next-line no-unused-vars
-function switchLanguage(){
+function switchLanguage() {
 	var flag = $("#lang-flag");
 	if (flag.hasClass("nl")) {
 		flag.removeClass("nl");

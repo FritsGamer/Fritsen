@@ -8,10 +8,14 @@ const server = app.listen(process.env.PORT || 9999, function() {
 	console.log("App listening on Port " + 9999);
 });
 
-//Static files
-app.use(express.static("public", {
-	maxAge: '1d', // Cache for a day
+// Static files
+app.use('/images', express.static("public/images", {
+	maxAge: '1d',
 }));
+app.use('/sounds', express.static("public/sounds", {
+	maxAge: '1d',
+}));
+app.use(express.static("public"));
 
 //Socket setup
 const io = socket(server);

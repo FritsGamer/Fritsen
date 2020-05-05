@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-function showDeck(nrCards){
+function showDeck(nrCards) {
 	var deck = $("#deck");
 	deck.empty();
 
@@ -12,7 +12,7 @@ function showDeck(nrCards){
 }
 
 // eslint-disable-next-line no-unused-vars
-function showPiles(piles, frits, lastmove){
+function showPiles(piles, frits, lastmove) {
 	var pilesDiv = $("#piles");
 	pilesDiv.empty();
 
@@ -21,17 +21,19 @@ function showPiles(piles, frits, lastmove){
 		var div = "<div id='pile" + i + "' class='cardblock pile'></div>";
 		const p = $(div);
 
-		if(pile.length > 0 || frits || i === 0) p.addClass("open");
-		if(i == 0){
+		if (pile.length > 0 || frits || i === 0) {
+			p.addClass("open");
+		}
+		if (i == 0) {
 			p.addClass("joker");
-		}else{
+		} else {
 			var num = i - 1;
 			var mtop = (num%3) * 20;
 			var mleft = Math.floor(num/3) * 15;
 			p.css("margin-top", mtop + "%");
 			p.css("margin-left", mleft + "%");
 		}
-		if (i == lastmove){
+		if (i == lastmove) {
 			p.addClass("lastmove");
 		}
 		if (pile.length == 0) {
@@ -53,7 +55,7 @@ function showPiles(piles, frits, lastmove){
 
 var useTouch = false;
 // eslint-disable-next-line no-unused-vars
-function showHand(cards){
+function showHand(cards) {
 	var hand = $("#hand");
 	hand.empty();
 
@@ -65,7 +67,7 @@ function showHand(cards){
 	for (let i = 0; i < cards.length; i++) {
 		const card = cards[i];
 		var topMargin, leftMargin;
-		if(i < firstRow){
+		if (i < firstRow) {
 			topMargin = firstRowTop;
 			leftMargin = -4 * firstRow + 8 * i;
 		} else {
@@ -224,7 +226,7 @@ function placeCard(pile) {
 }
 
 function getCardsUrl() {
-	if ($("#lang-flag").hasClass("fr")){
+	if ($("#lang-flag").hasClass("fr")) {
 		return "../images/cards/fr/";
 	}
 

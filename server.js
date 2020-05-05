@@ -1,6 +1,6 @@
 ///// SETUP SERVER
-const express = require('express');
-const socket = require('socket.io');
+const express = require("express");
+const socket = require("socket.io");
 
 //App Setup
 const app = express();
@@ -8,10 +8,14 @@ const server = app.listen(process.env.PORT || 9999, function() {
 	console.log("App listening on Port " + 9999);
 });
 
-//Static files
-app.use(express.static("public", {
-	maxAge: '1d', // Cache for a day
+// Static files
+app.use("/images", express.static("public/images", {
+	maxAge: "1d",
 }));
+app.use("/sounds", express.static("public/sounds", {
+	maxAge: "1d",
+}));
+app.use(express.static("public"));
 
 //Socket setup
 const io = socket(server);
@@ -33,23 +37,23 @@ const maxParticipants = 6;
 
 // SOCKET CONNECTION FUNCTIONS
 
-io.sockets.on('connection', function (socket) {
+io.sockets.on("connection", function (socket) {
 	console.log("connection: " + socket.id);
 	players[socket.id] = {
 		matchId: false,
 		inQueue: false
 	};
 
-    // Match Events
-    socket.on('disconnect', onDisconnect);
-    socket.on('joinQueue', function(name){ joinQueue(socket.id, name); });
-    socket.on('startMatch', createMatches);
+	// Match Events
+	socket.on("disconnect", onDisconnect);
+	socket.on("joinQueue", function(name){ joinQueue(socket.id, name); });
+	socket.on("startMatch", createMatches);
 
-    // Fritsen Events
-    socket.on('playCard', function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
-    socket.on('frits', fritsCards);
-    socket.on('vuileFrits', vuileFritsCards);
-    socket.on('getPlayerNames', playersInMatch);
+	// Fritsen Events
+	socket.on("playCard", function(cardId, pileId){ playCard(socket.id, cardId, pileId); });
+	socket.on("frits", fritsCards);
+	socket.on("vuileFrits", vuileFritsCards);
+	socket.on("getPlayerNames", playersInMatch);
 	console.log("connection handled");
 });
 
@@ -60,7 +64,7 @@ function onDisconnect(){
 	console.log("onDisconnect: disconnect: " + this.id);
 	var player = players[this.id];
 	if(!player) return;
-	
+
 	var matchId = player.matchId;
 	if(matchId){
 		var match = matches[matchId];
@@ -68,28 +72,28 @@ function onDisconnect(){
 		if(match && !checkWin(match, player, result)){
 			match.state = "disconnect";
 			player.disconnect = true;
-			timeout = disconnectTimeout;
-			
+			var timeout = disconnectTimeout;
+
 			setTimeout(function(){
 				console.log("onDisconnect: timeout expired ", match);
-				if(match.state === "disconnect"){					
+				if(match.state === "disconnect"){
 					match.playerIds.forEach(function(id) {
 						var p = players[id];
 						if(p) p.done = true;
 					});
 					checkWin(match, player, result);
-				}				
-			}, disconnectTimeout);			
-			
-			return updateCards(match, result, timeout);			
+				}
+			}, disconnectTimeout);
+
+			return updateCards(match, result, timeout);
 		}
 	} else if (player.inQueue){
 		player.inQueue = false;
 		var queue = getQueue();
-		queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
+		queue.forEach(function(p) { io.to(p.id).emit("queue", queue); });
 		delete players[this.id];
-	   console.log("onDisconnect: player deleted");
-	}	
+		console.log("onDisconnect: player deleted");
+	}
 }
 
 
@@ -112,52 +116,52 @@ function joinQueue(socketId, name) {
 	player.vuilefrits = 0;
 	player.turnCount = 0;
 	player.cards = [];
-	
+
 	var queue = getQueue();
-	queue.forEach(function(p) { io.to(p.id).emit('queue', queue); });
+	queue.forEach(function(p) { io.to(p.id).emit("queue", queue); });
 	console.log("joinQueue: join handled");
 }
 
 function tryReconnectPlayer(player, socketId, name){
-	for(matchId in matches){
+	for(var matchId in matches){
 		var match = matches[matchId];
 		var disconnectId = "";
-		
-		if(match.state === "disconnect"){	
-			for (playerId in players) {
+
+		if(match.state === "disconnect"){
+			for (var playerId in players) {
 				var p = players[playerId];
-				
+
 				if(p.disconnect){
 					players[socketId] = p;
 					match.state = "playing";
 					var index = match.playerIds.indexOf(playerId);
-					
+
 					delete match.playerIds[index];
 					match.playerIds.splice(index, 0, socketId);
-					
+
 					match.playerIds = match.playerIds.filter(function (el) {
-					  return el != null;
+						return el != null;
 					});
-					
+
 					if(match.turnId === playerId){
 						match.turnId = socketId;
 					}
-					
+
 					players[socketId].id = socketId;
 					players[socketId].name = p.name;
 					disconnectId = playerId;
 					break;
 				}
-			};
-			
+			}
+
 			if(disconnectId !== ""){
 				delete players[disconnectId];
 				updateCards(match, getRule("Reconnected", name));
-				return true;	
+				return true;
 			}
-		}		
-	};
-	
+		}
+	}
+
 	return false;
 }
 
@@ -168,13 +172,13 @@ function createMatches(){
 		return;
 
 	// while number of players is in abundance keep creating matches of max size
-	while (participants.length > 2 * maxParticipants){		
+	while (participants.length > 2 * maxParticipants){
 		createMatch(participants.splice(0, maxParticipants));
 	}
 
 	// if larger than maximum number split in two groups else all in one group
 	if(participants.length > maxParticipants){
-		var playerNum = participants.length / 2;	
+		var playerNum = participants.length / 2;
 		createMatch(participants.splice(0, playerNum));
 	}
 
@@ -205,7 +209,7 @@ function createMatch(participants) {
 	jokerPile.jokerPile = true;
 	var firstPile = addPile(match);
 	var pcs = firstPile.cards;
-	
+
 	//while no joker
 	while(match.deck.length > 0 && (pcs.length === 0 || pcs[pcs.length - 1].identity === "Joker" )){
 		drawCards(firstPile.cards, match.deck, 1);
@@ -216,7 +220,7 @@ function createMatch(participants) {
 
 	setTimeout(function(){
 		if(match.state === "vuileFrits"){
-			match.state = "playing";			
+			match.state = "playing";
 		}
 		match.turnId = -1;
 		nextPlayer(match);
@@ -229,8 +233,8 @@ function createMatch(participants) {
 // FRITS MOVE HANDLERS
 
 function playCard(socketId, cardId, pileId) {
-	console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");	
-	
+	console.log("playCard: " + socketId + " -> (" + cardId + ", " + pileId + ")");
+
 	var match = findMatchBySocketId(socketId);
 	var player = players[socketId];
 	if(!match || !player) return;
@@ -259,7 +263,6 @@ function playCard(socketId, cardId, pileId) {
 	//valid move
 	if (result.value > 0) {
 		match.lastMove = pileId;
-		match.frits = false;
 		
 		//Remove player when he has no cards left
 		if(hand.length === 0) {
@@ -275,18 +278,18 @@ function playCard(socketId, cardId, pileId) {
 			clearTimeout ( match.baudetTimeout );
 			match.baudetTimeout = false;
 		}
-		
+
 		match.state = "playing";
 		var achievements = getAchievements(match, result);
 
 		if (result.name === "Baudet"){
 			match.state = "baudet";
 			timeout = baudetTime;
-			
+
 			match.baudetTimeout = setTimeout(function(){
 				newHand(hand, match.deck);
 				if(match.state === "baudet"){
-					match.state = "playing"; 
+					match.state = "playing";
 				}
 				match.baudetTimeout = false;
 				nextPlayer(match);
@@ -296,7 +299,7 @@ function playCard(socketId, cardId, pileId) {
 			nextPlayer(match);
 		}
 	}
-	
+
 	return updateCards(match, result, timeout, achievements);
 }
 
@@ -304,33 +307,33 @@ function fritsCards(){
 	console.log("fritsCards: " + this.id);
 	var match = findMatchBySocketId(this.id);
 	var player = players[this.id];
-	
+
 	if(!match || !player || match.state === "timeout" || match.state === "disconnect")
 		return;
-	
+
 	if (match.state === "vuileFrits") {
 		return updateCards(match, getRule("DesVuil", player.name));
 	}
 
 	if(!match.frits && match.state === "playing" && match.turnId === this.id){
 		drawCards(player.cards, match.deck, 2);
-		match.frits = true;	
+		match.frits = true;
 
 		//add new pile if no pile is empty
 		if (match.piles[match.piles.length - 1].cards.length > 0) {
 			addPile(match);
 		}
-		
+
 		var result = getRule("Frits", player.name);
-		
+
 		updateCards(match, result);
 	} else {
 		if (match.turnId !== this.id && match.state !== "baudet"){
-			return updateCards(match, getRule("DesBeurt", player.name));			
+			return updateCards(match, getRule("DesBeurt", player.name));
 		} else if (match.turnId === this.id && match.frits) {
-			return updateCards(match, getRule("AlGefritst", player.name));		
-		} else {			
-			return updateCards(match, getRule("Fout", player.name));	
+			return updateCards(match, getRule("AlGefritst", player.name));
+		} else {
+			return updateCards(match, getRule("Fout", player.name));
 		}
 	}
 	console.log("fritsCards: handled");
@@ -355,19 +358,19 @@ function vuileFritsCards() {
 function playersInMatch() {
 	console.log("playersInMatch: " + this.id);
 	var match = findMatchBySocketId(this.id);
-	var player = players[this.id];	
-	
+	var player = players[this.id];
+
 	if (!match || !player) return;
-		
-		
+
+
 	var playerNames = [];
-	
+
 	match.playerIds.forEach(function(id) {
 		var p = players[id];
-		if(p) playerNames.push(p.name); 
+		if(p) playerNames.push(p.name);
 	});
-			
-	
+
+
 	io.to(this.id).emit("playerNames", playerNames);
 }
 
@@ -375,9 +378,9 @@ function playersInMatch() {
 
 function getQueue(){
 	var queue = [];
-	for(playerId in players){
+	for(var playerId in players){
 		var p = players[playerId];
-		if(p && p.inQueue) 
+		if(p && p.inQueue)
 			queue.push({name: p.name, id: playerId, num: p.inQueue});
 	}
 	queue.sort(function(a, b) { return a.num - b.num; });
@@ -391,15 +394,15 @@ function getQueue(){
 
 function updateCards(match, result, timeout, achievements) {
 	if(!match || !match.piles) {
-		return
+		return;
 	}
 	var piles = [];
-	for (var i = 0; i < match.piles.length; i++) {
+	for (let i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
 		piles.push(asStrings);
 	}
 
-	for (var i = 0; i < match.playerIds.length; i++) {
+	for (let i = 0; i < match.playerIds.length; i++) {
 		var playerId = match.playerIds[i];
 		var player = players[playerId];
 		if(player){
@@ -427,34 +430,34 @@ function updateCards(match, result, timeout, achievements) {
 
 function getAchievements(match, result) {
 	if(!match || !match.piles) {
-		return
+		return;
 	}
-	
+
 	var piles = match.piles;
-	var newAchievements = []
+	var newAchievements = [];
 
 	if (!match.lastMove || match.lastMove < 0) {
 		return [];
 	}
 
-	var currentPile = piles[match.lastMove]
+	var currentPile = piles[match.lastMove];
 
 	// Uitfrits achievements
 	var player = players[match.turnId];
 	if (player) {
 		if (player.cards.length === 0) {
 			if (player.turnCount <= 2) {
-				newAchievements.push({ by: player.name,	text: 'Eiken Frits'	});
+				newAchievements.push({ by: player.name,	text: "Eiken Frits"	});
 			} else if (player.turnCount <= 3) {
-				newAchievements.push({ by: player.name, text: 'Platina Frits' });
+				newAchievements.push({ by: player.name, text: "Platina Frits" });
 			} else if (player.turnCount <= 4) {
-				newAchievements.push({ by: player.name, text: 'Diamanten Frits' });
+				newAchievements.push({ by: player.name, text: "Diamanten Frits" });
 			} else if (player.turnCount <= 5) {
-				newAchievements.push({ by: player.name, text: 'Gouden Frits' });
+				newAchievements.push({ by: player.name, text: "Gouden Frits" });
 			} else if (player.turnCount <= 7) {
-				newAchievements.push({ by: player.name, text: 'Zilveren Frits' });
+				newAchievements.push({ by: player.name, text: "Zilveren Frits" });
 			} else if (player.turnCount <= 9) {
-				newAchievements.push({ by: player.name, text: 'Bronzen Frits' });
+				newAchievements.push({ by: player.name, text: "Bronzen Frits" });
 			}
 		}
 	}
@@ -462,26 +465,26 @@ function getAchievements(match, result) {
 	var ids = currentPile.cards.map((pile) => pile.identity);
 	var suits = currentPile.cards.map((pile) => pile.suit);
 	var size = ids.length;
-	
+
 	if (size < 1) {
 		return newAchievements;
-	}	
+	}
 
-	if (ids[size - 1] === 12) {		
+	if (ids[size - 1] === 12) {
 		var counterKim = 0;
 		piles.forEach((pile) => {
 			pile.cards.forEach((card) => {
 				if (card.identity === 12) {
 					counterKim++;
 				}
-			})
-		})
-		
+			});
+		});
+
 		if (counterKim === 1) {
 			newAchievements.push({
 				by: player.name,
-				text: 'Eerste Kim'
-			})
+				text: "Eerste Kim"
+			});
 		}
 	}
 
@@ -489,17 +492,17 @@ function getAchievements(match, result) {
 		return newAchievements;
 	}
 
-	var isStart = piles.length === 2 && size === 2
+	var isStart = piles.length === 2 && size === 2;
 	var diff = ids[size - 1] - ids[size - 2];
 
 	if (diff > 9 && suits[size - 2] === suits[size - 1]) {
-		var achievementText = isStart ? 'Tactical Start' : 'Tactical Frits';
+		const achievementText = isStart ? "Tactical Start" : "Tactical Frits";
 		newAchievements.push({
 			by: player.name,
 			text: achievementText
 		});
 	} else if (diff === 1 && suits[size - 2] === suits[size - 1]) {
-		var achievementText = isStart ? 'Soepele Start' : 'Soepele Frits';
+		const achievementText = isStart ? "Soepele Start" : "Soepele Frits";
 		newAchievements.push({
 			by: player.name,
 			text: achievementText
@@ -507,29 +510,29 @@ function getAchievements(match, result) {
 	} else if (isStart && result.name === "Offer") {
 		newAchievements.push({
 			by: player.name,
-			text: 'Offer Start'
-		})
-	} 
-		
-	if (ids[size - 2] !== 12 && 
+			text: "Offer Start"
+		});
+	}
+
+	if (ids[size - 2] !== 12 &&
 		ids[size - 1] === 6
 	) {
 		newAchievements.push({
 			by: player.name,
-			text: 'Lavendelfrits'
-		})
-	} 
+			text: "Lavendelfrits"
+		});
+	}
 
-	if (size >= 4 && 
-		ids[size - 1] === 12 && 
-		ids[size - 2] === 12 && 
+	if (size >= 4 &&
+		ids[size - 1] === 12 &&
+		ids[size - 2] === 12 &&
 		ids[size - 3] === 12 &&
-		ids[size - 4] === 12 
+		ids[size - 4] === 12
 	) {
 		newAchievements.push({
 			by: player.name,
-			text: 'Vierde Kim',
-		})
+			text: "Vierde Kim",
+		});
 	}
 
 	return newAchievements;
@@ -537,42 +540,43 @@ function getAchievements(match, result) {
 
 function nextPlayer(match){
 	if(!match || !match.playerIds) {
-		return
+		return;
 	}
-	
+
 	var index = match.playerIds.indexOf(match.turnId);
 
-	var next = (index + 1) % match.playerIds.length;	
+	var next = (index + 1) % match.playerIds.length;
 	match.turnId = match.playerIds[next];
-	
+
 	var p = players[match.turnId];
-	
+
 	if (p.done) {
 		nextPlayer(match);
 	} else {
+		match.frits = false;
 		p.turnCount++;
 		if(match.turnTimer) {
 			clearTimeout(match.turnTimer);
 		}
-		
+
 		match.turnTimer = setTimeout(function(){
-			skipTurn(match, p);			
+			skipTurn(match, p);
 		}, turnTime);
 	}
 }
 
 function checkWin(match, player, result){
 	if(!match || !match.playerIds) {
-		return
+		return;
 	}
-	
-	console.log('checkWin: match=',match);
+
+	console.log("checkWin: match=",match);
 	var inGame = 0;
 	var loserName = player.name;
 	match.playerIds.forEach(function(id) {
 		var p = players[id];
 		if(p && !p.done){
-			inGame++; 
+			inGame++;
 			loserName = p.name;
 		}
 	});
@@ -582,8 +586,8 @@ function checkWin(match, player, result){
 		updateCards(match, result, 0, achievements);
 
 		match.playerIds.forEach( function(id){ io.to(id).emit("game over", loserName); });
-		removeMatch(player.matchId);		
-		
+		removeMatch(player.matchId);
+
 		console.log("checkWin: removed match=" , match);
 		return true;
 	}
@@ -595,8 +599,10 @@ function skipTurn(match, player){
 		return;
 	}
 	
-	drawCards(player.cards, match.deck, 2);
-	match.frits = false;
+	if(!match.frits) {
+		drawCards(player.cards, match.deck, 2);		
+	}
+	
 	nextPlayer(match);
 	updateCards(match, getRule("BeurtOver", player.name));
 }
@@ -625,30 +631,30 @@ function removeMatch(matchId) {
 	for (var key in match) {
 		delete match[key];
 	}
-	
+
 	delete matches[matchId];
 }
 
 //Card Games
-var Suits = Object.freeze({"Clubs":"C", "Hearts":"H", "Spades":"S", "Diamonds":"D", "Red": "R", "Black":"B"})
-var Identities = Object.freeze({"Joker":"X", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"T", 11:"J", 12:"Q", 13:"K", 14:"A"})
+var Suits = Object.freeze({"Clubs":"C", "Hearts":"H", "Spades":"S", "Diamonds":"D", "Red": "R", "Black":"B"});
+var Identities = Object.freeze({"Joker":"X", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"T", 11:"J", 12:"Q", 13:"K", 14:"A"});
 
 function Card(identity, suit) {
-  this.identity = identity;
-  this.suit = suit;
+	this.identity = identity;
+	this.suit = suit;
 }
 
 function createDeck(){
 	var numJokers = 3;
 	var deck = [];
-	var suits = ["Clubs", "Hearts", "Spades", "Diamonds"]
+	var suits = ["Clubs", "Hearts", "Spades", "Diamonds"];
 	suits.forEach(function(suit) {
 		for (var i = 2; i <= 14; i++){
 			deck.push(new Card(i, suit));
 		}
 	});
 
-	var colors = ["Red", "Black"]
+	var colors = ["Red", "Black"];
 	for (var i = 0; i < numJokers; i++){
 		deck.push(new Card("Joker", colors[i%2]));
 	}
@@ -697,7 +703,7 @@ function newHand(hand, deck){
 // Fritsen Rules
 
 function Pile(cards){
-  this.cards = cards;
+	this.cards = cards;
 }
 
 function addPile(match){
@@ -711,7 +717,6 @@ function Rule(name, description, value, fritsPauzeTime) {
   this.description = description;
   this.value = value;
   this.fritsPauzeTime = fritsPauzeTime;
-}
 
 var Rules = [
 	new Rule("DesBeurt", "Fritsje des: je bent niet aan de beurt", 0, 2500),
@@ -745,15 +750,15 @@ var Rules = [
 ];
 
 function getRule(name, playerName) {
-	console.log("getRule: name=", name, 'playerName=', playerName);
+	console.log("getRule: name=", name, "playerName=", playerName);
 	var rule = Rules.find(function(r) { return r.name === name; });
-	
+
 	if(playerName){
 		rule = JSON.parse(JSON.stringify(rule));
 		rule.by = playerName;
 		rule.description = rule.description
 	}
-	
+
 	return rule;
 }
 
@@ -772,8 +777,8 @@ function getRule(name, playerName) {
 
 
 function checkCards(card, pileId, match, hand, socketId, player)
-{	
-    //7. 3 of Clubs on the last 6, when baudet is executed (Klaver) 
+{
+	//7. 3 of Clubs on the last 6, when baudet is executed (Klaver)
 	//   first check as all other moves should be rejected during the baudetTimeout
 	if(match.state === "baudet"){
 		if(card.identity === 3 && card.suit === "Clubs" && match.lastMove === pileId)
@@ -809,61 +814,61 @@ function checkCards(card, pileId, match, hand, socketId, player)
 	}
 
 	var top = pile.cards[pile.cards.length - 1];
-  
+
 	var cardId = Identities[card.identity];
-	var pileId = Identities[top.identity];
+	var pileIdentity = Identities[top.identity];
 	var cardSuit = Suits[card.suit];
 	var pileSuit = Suits[top.suit];
 
 	//2. Card is a 9
-	if (cardId === '9')
+	if (cardId === "9")
 	{
-		if(pileId === '9')
+		if(pileIdentity === "9")
 			return getRule("DubbelNegen", player.name);
 		else
 			return getRule("Goed", player.name);
 	}
 
 	//3. Queen on a Queen (Kim)
-	if (pileId === 'Q')
+	if (pileIdentity === "Q")
 	{
-		if(cardId === 'Q')
+		if(cardId === "Q")
 		{
 			for(var i = pile.cards.length - 1; i >= 0; i--){
 				var c = Identities[pile.cards[i].identity];
-				if (c !== 'Q')
+				if (c !== "Q")
 					break;
-				
+
 				if(i <= pile.cards.length - 3)
-					return getRule("VierdeKim", player.name);					
+					return getRule("VierdeKim", player.name);
 			}
 			return getRule("Kim", player.name);
 		}
 
 		//4. Jack of clubs on Red Queen or vice versa (Joris)
-		if (cardId === 'J' && cardSuit === 'C' && (pileSuit === 'H' || pileSuit === 'D'))
+		if (cardId === "J" && cardSuit === "C" && (pileSuit === "H" || pileSuit === "D"))
 			return getRule("Joris", player.name);
 
 		//6. 6 on a Queen (Baudet)
-		if (cardId === '6'){
+		if (cardId === "6"){
 			if(hand.length > 1)
 				return getRule("Baudet", player.name);
 			else
 				return getRule("BaudetFout", player.name);
-		} 
+		}
 	}
 
 	//4. Joris Reverse
-	if (pileId === 'J' && pileSuit === 'C')
+	if (pileIdentity === "J" && pileSuit === "C")
 	{
-		if (cardId === 'Q' && (cardSuit === 'H' || cardSuit === 'D'))
+		if (cardId === "Q" && (cardSuit === "H" || cardSuit === "D"))
 			return getRule("Joris", player.name);
 	}
 
 	//5. King on Ace of Hearts or vice versa (Lisa)
-	if((cardId === 'A' && cardSuit === 'H') || (pileId === 'A' && pileSuit === 'H'))
+	if((cardId === "A" && cardSuit === "H") || (pileIdentity === "A" && pileSuit === "H"))
 	{
-		if (cardId === 'K' || pileId === 'K')
+		if (cardId === "K" || pileIdentity === "K")
 			return getRule("Lisa", player.name);
 	}
 
@@ -883,10 +888,10 @@ function checkCards(card, pileId, match, hand, socketId, player)
 		}
 
 		//10. Same suit with 2 on Ace
-		if (cardId === '2' && pileId === 'A') {
+		if (cardId === "2" && pileIdentity === "A") {
 			return getRule("Goed", player.name);
 		}
-			
+
 	}
 
 	return getRule("Fout", player.name);
@@ -961,7 +966,7 @@ function placeWillemAndFrits(participants){
 		if(fritsIndex >= 0) {
 			participants.push(participants.splice(fritsIndex, 1)[0]);
 		}
-			
+
 		var willemIndex = minHammingDistanceIndex(participants, "Willem");
 		if(willemIndex >= 0) {
 			participants.unshift(participants.splice(willemIndex, 1)[0]);

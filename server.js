@@ -717,6 +717,7 @@ function Rule(name, description, value, fritsPauzeTime) {
   this.description = description;
   this.value = value;
   this.fritsPauzeTime = fritsPauzeTime;
+}
 
 var Rules = [
 	new Rule("DesBeurt", "Fritsje des: je bent niet aan de beurt", 0, 2500),

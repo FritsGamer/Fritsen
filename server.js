@@ -259,7 +259,6 @@ function playCard(socketId, cardId, pileId) {
 	//valid move
 	if (result.value > 0) {
 		match.lastMove = pileId;
-		match.frits = false;
 		
 		//Remove player when he has no cards left
 		if(hand.length === 0) {
@@ -551,6 +550,7 @@ function nextPlayer(match){
 	if (p.done) {
 		nextPlayer(match);
 	} else {
+		match.frits = false;
 		p.turnCount++;
 		if(match.turnTimer) {
 			clearTimeout(match.turnTimer);
@@ -595,8 +595,10 @@ function skipTurn(match, player){
 		return;
 	}
 	
-	drawCards(player.cards, match.deck, 2);
-	match.frits = false;
+	if(!match.frits){
+		drawCards(player.cards, match.deck, 2);		
+	}
+	
 	nextPlayer(match);
 	return updateCards(match, getRule("BeurtOver", player.name));
 }

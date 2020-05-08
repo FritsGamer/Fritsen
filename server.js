@@ -260,7 +260,11 @@ function playCard(socketId, cardId, pileId) {
 		return;
 	}
 
-	if (match.state === "timeout" || match.state === "disconnect") {
+	if (match.state === "timeout") {
+		return updateCards(match, getRule("DesPauze", player.name));
+	}
+
+	if (match.state === "disconnect") {
 		return updateCards(match, getRule("DesBeurt", player.name));
 	}
 
@@ -753,6 +757,7 @@ function Rule(name, description, value, fritsPauzeTime) {
 }
 
 var Rules = [
+	new Rule("DesPauze", "Fritsje des: het is fritspauze", 0, 2500),
 	new Rule("DesBeurt", "Fritsje des: je bent niet aan de beurt", 0, 2500),
 	new Rule("DesVuil", "Fritsje des: je mag geen zet doen tijdens het vuil fritsen", 0, 0),
 	new Rule("Fout", "Fritsje des: deze zet bestaat niet", 0, 2500),

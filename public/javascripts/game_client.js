@@ -6,6 +6,14 @@ var playerNamesShown = false;
 
 var lastDeck, lastCards, lastPiles, lastFrits, lastLastmove;
 
+socket.on("notification", function({ by = false, text = false, duraction = false }) {
+	queueMessage({ by, text,duraction });
+});
+
+socket.on("vuilFritsHasEnded", function() {
+	$("#vuilefrits").hide();
+});
+
 socket.on("update cards", function(cards, deck, piles, frits, lastmove, message, timeout, achievements) {
 	if (message && message.name === "Reconnected") {
 		// eslint-disable-next-line no-undef
@@ -39,18 +47,6 @@ socket.on("update cards", function(cards, deck, piles, frits, lastmove, message,
 	}
 
 	if (message) {
-		queueMessage(message);
-
-		if (message.value !== 0) {
-			$("#vuilefrits").hide();
-
-			if (message.name === "Baudet") {
-				$("#turn").text("Baudet");
-			} else {
-				$("#turn").text("");
-			}
-		}
-
 		if (message.name === "Disconnect") {
 			showTimeout(timeout, "Reconnecting...");
 		} else if (message.fritsPauzeTime > 0 && (!achievements || achievements.length === 0)) {
@@ -88,9 +84,10 @@ socket.on("queue", function(players) {
 
 socket.on("match started", function() {
 	canVuileFrits = true;
-	const message = {};
-	message.description = "Je mag nu vuil fritsen: klik op het gele doekje!";
-	queueMessage(message,9000);
+	queueMessage({
+		text: "Je mag nu vuil fritsen: klik op het gele doekje!"
+	});
+
 	// eslint-disable-next-line no-undef
 	startGame();
 	$("#queue-image").show();
@@ -103,24 +100,26 @@ socket.on("match started", function() {
 });
 
 socket.on("game over", function(name) {
-	const message = {};
-	message.description = "Dubbele frits: je hebt verloren";
-	message.by = name;
-	queueMessage(message);
+	queueMessage({
+		by: name,
+		text: "Dubbele frits: je hebt verloren!"
+	});
+
 	setTimeout(function() {
 		resetGame();
 	}, 10000);
 });
 
 socket.on("playerNames", function(names) {
-	var timeout = 10000;
-	const message = {};
-	message.description = names.join(" ➡️ ");
-	queueMessage(message, timeout);
+	const duraction = 9000;
+	queueMessage({
+		text: names.join(" ➡️ "),
+		duraction
+	});
 
 	setTimeout(() => {
 		playerNamesShown = false;
-	}, timeout);
+	}, duraction);
 });
 
 function resetGame() {
@@ -179,19 +178,19 @@ function openRulePDF() {
 	win.focus();
 }
 
-function queueMessage(message, timeout) {
-	if (!message || !message.description) {
+function queueMessage({ by = false, text = false, duraction = false }) {
+	if (!text) {
 		return;
 	}
 
 	var notifications = $("#notifications-container");
 	var notification = $("<div>").addClass("notification");
-	var messageBy = $("<div>").addClass("notification-by").text(message.by);
-	var messageText = $("<div>").addClass("notification-text").text(message.description);
+	var messageBy = $("<div>").addClass("notification-by").text(by);
+	var messageText = $("<div>").addClass("notification-text").text(text);
 	var messageCounter = $("<div>").addClass("notification-count");
 
 	notifications.append(notification);
-	if (message.by) {
+	if (by) {
 		notification.append(messageBy);
 	}
 	notification.append(messageText);
@@ -213,9 +212,7 @@ function queueMessage(message, timeout) {
 	};
 
 	notification.fadeIn();
-
-	timeout = timeout > 9000 ? timeout : 9000;
-	showNext(Math.floor(timeout/1000));
+	showNext((duraction || 9000) / 1000);
 }
 
 // eslint-disable-next-line no-unused-vars

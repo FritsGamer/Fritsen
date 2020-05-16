@@ -18,40 +18,18 @@ module.exports = {
 		"ecmaVersion": 2018
 	},
 	"rules": {
-		"space-before-blocks" : [
-			"error"
-		],
-		"block-spacing" : [
-			"error"
-		],
-		"keyword-spacing" : [
-			"error"
-		],
-		"no-trailing-spaces": [
-			"error"
-		],
-		"brace-style" : [
-			"error"
-		],
-		"curly": [
-			"error",
-			"all"
-		],
-		"indent": [
-			"error",
-			"tab"
-		],
-		"linebreak-style": [
-			"error",
-			"unix"
-		],
-		"quotes": [
-			"error",
-			"double"
-		],
-		"semi": [
-			"error",
-			"always"
-		]
+        "array-bracket-spacing": ["error", "always"],
+        "object-curly-spacing": ["error", "always"],
+        "no-multi-spaces" : ["error"],
+		"space-before-blocks" : ["error"],
+		"block-spacing" : ["error"],
+		"keyword-spacing" : ["error"],
+		"no-trailing-spaces": ["error"],
+		"brace-style" : ["error"],
+		"curly": ["error","all"],
+		"indent": ["error","tab"],
+		"linebreak-style": ["error","unix"],
+		"quotes": ["error","double"],
+		"semi": ["error","always"]
 	}
 };

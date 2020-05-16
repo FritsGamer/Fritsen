@@ -27,7 +27,7 @@ var matches = {};
 var queueNumber = 1;
 
 // CONSTANTS
-const vuileFritsTime = 1000;
+const vuileFritsTime = 9000;
 const vuileFritsTimeout = 2000;
 const baudetTime = 10000;
 const aasKoningTimeout = 4000;
@@ -753,9 +753,6 @@ function drawCards(cards, deck, numCards) {
 	for (var i = 0; i < numCards; i++) {
 		cards.push(deck.pop());
 	}
-	cards.push(new Card(14, "Clubs"));
-	cards.push(new Card(13, "Clubs"));
-	cards.push(new Card(12, "Clubs"));
 }
 
 function newHand(hand, deck) {

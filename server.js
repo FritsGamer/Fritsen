@@ -27,12 +27,18 @@ var matches = {};
 var queueNumber = 1;
 
 // CONSTANTS
-const vuileFritsTime = 9000;
-const vuileFritsTimeout = 2000;
-const baudetTime = 10000;
-const aasKoningTimeout = 4000;
-const disconnectTimeout = 20000;
-const turnTime = 99000;
+const DURATIONS = {
+	vuileFrits: 9000,
+	baudet: 10000,
+	turn: 99000,
+};
+
+const TIMEOUTS = {
+	vuileFrits: 2000,
+	aasKoning: 4000,
+	disconnect: 20000,
+};
+
 const startHand = 5;
 const maxParticipants = 6;
 
@@ -79,7 +85,7 @@ function onDisconnect() {
 		if (match && !checkWin(match, player, result)) {
 			match.state = "disconnect";
 			player.disconnect = true;
-			var timeout = disconnectTimeout;
+			var timeout = TIMEOUTS.disconnect;
 
 			setTimeout(function() {
 				console.log("onDisconnect: timeout expired ", match);
@@ -92,7 +98,7 @@ function onDisconnect() {
 					});
 					checkWin(match, player, result);
 				}
-			}, disconnectTimeout);
+			}, timeout);
 
 			return updateCards(match, result, timeout);
 		}
@@ -236,7 +242,7 @@ function createMatch(participants) {
 	match.playerIds.forEach( function(id) {
 		io.to(id).emit("match started");
 	});
-	updateCards(match, getRule("Update", false), vuileFritsTime);
+	updateCards(match, getRule("Update", false), DURATIONS.vuileFrits);
 
 	setTimeout(function() {
 		if (match.state === "vuileFrits") {
@@ -245,7 +251,7 @@ function createMatch(participants) {
 		match.turnId = -1;
 		nextPlayer(match);
 		updateCards(match, getRule("Start", false));
-	}, vuileFritsTime);
+	}, DURATIONS.vuileFrits);
 	console.log("createMatch: match created");
 }
 
@@ -318,7 +324,7 @@ function playCard(socketId, cardId, pileId) {
 
 		if (result.name === "Baudet") {
 			match.state = "baudet";
-			timeout = baudetTime;
+			timeout = DURATIONS.baudet;
 
 			match.baudetTimeout = setTimeout(function() {
 				newHand(hand, match.deck);
@@ -337,7 +343,7 @@ function playCard(socketId, cardId, pileId) {
 				}
 				match.aasKoningTimeout = false;
 				nextPlayer(match);
-			}, aasKoningTimeout);
+			}, TIMEOUTS.aasKoning);
 		} else {
 			nextPlayer(match);
 		}
@@ -397,7 +403,7 @@ function vuileFritsCards() {
 			newHand(hand, match.deck);
 			var result = getRule("VuileFrits", player.name);
 			updateCards(match, result);
-			player.vuilefrits = Date.now() + vuileFritsTimeout;
+			player.vuilefrits = Date.now() + TIMEOUTS.vuileFrits;
 		}
 	}
 	console.log("vuileFritsCards: handled");
@@ -623,7 +629,7 @@ function nextPlayer(match) {
 
 		match.turnTimer = setTimeout(function() {
 			skipTurn(match, p);
-		}, turnTime);
+		}, DURATIONS.turn);
 	}
 }
 
@@ -791,7 +797,7 @@ var Rules = [
 	new Rule("Goed", "heeft een kaart opgelegd", 2, 0),
 	new Rule("Update", "", 0, 0),
 	new Rule("Start", "", 2, 0),
-	new Rule("BeurtOver", "Fritsje des en beurt voorbij: je hebt maar " + (turnTime/1000) + " seconden", 2, 2500),
+	new Rule("BeurtOver", "Fritsje des en beurt voorbij: je hebt maar " + (DURATIONS.turn/1000) + " seconden", 2, 2500),
 	new Rule("Offer", "Offerfrits: neem een Fritsje", 1, 2500),
 	new Rule("Joker", "Joker: andere spelers nemen een Fritsje", 1, 9000),
 	new Rule("Kim", "Kim: andere spelers nemen een Kimmetje", 1, 9000),
@@ -845,7 +851,7 @@ function getRule(name, playerName) {
 
 
 function checkCards(card, pileId, match, hand, socketId, player) {
-	var pile = match.piles[pileId];
+	let pile = match.piles[pileId];
 
 	//7. 3 of Clubs on the last 6, when baudet is executed (Klaver)
 	//   first check as all other moves should be rejected during the baudetTimeout

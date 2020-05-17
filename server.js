@@ -181,6 +181,18 @@ function tryReconnectPlayer(player, socketId, name) {
 	return false;
 }
 
+function sendNotificationToAllPlayers({ match, by, text, duration }) {
+	match.playerIds.forEach( function(id) {
+		io.to(id).emit("notification", { by, text, duration });
+	});
+}
+
+function sendVuilFritsHasEndedToAllPlayers({ match }) {
+	match.playerIds.forEach( function(id) {
+		io.to(id).emit("vuilFritsHasEnded");
+	});
+}
+
 function createMatches() {
 	var participants = getQueue();
 
@@ -206,7 +218,16 @@ function createMatch(participants) {
 	console.log("createMatch: participants.length=",participants.length);
 
 	var matchId = createId();
-	matches[matchId] = { playerIds: [], state: "vuileFrits", turnId: false, piles: [], frits: false, lastMove: -1, deck: createDeck(), baudetTimeout: false };
+	matches[matchId] = {
+		playerIds: [],
+		state: "vuileFrits",
+		turnId: false,
+		piles: [],
+		frits: false,
+		lastMove: -1,
+		deck: createDeck(),
+		baudetTimeout: false
+	};
 	var match = matches[matchId];
 
 	placeWillemAndFrits(participants);
@@ -243,7 +264,7 @@ function createMatch(participants) {
 		}
 		match.turnId = -1;
 		nextPlayer(match);
-		updateCards(match, getRule("Start", false));
+		sendVuilFritsHasEndedToAllPlayers({ match });
 	}, vuileFritsTime);
 	console.log("createMatch: match created");
 }
@@ -286,7 +307,7 @@ function playCard(socketId, cardId, pileId) {
 	var result = placeOnPile(cardId, pileId, match, hand, socketId, player);
 	var timeout = 0;
 	//valid move
-	if (result.value > 0) {
+	if (result.duration > 0) {
 		match.lastMove = pileId;
 
 		//Remove player when he has no cards left
@@ -412,7 +433,7 @@ function getQueue() {
 	for (var playerId in players) {
 		var p = players[playerId];
 		if (p && p.inQueue) {
-			queue.push({name: p.name, id: playerId, num: p.inQueue});
+			queue.push({ name: p.name, id: playerId, num: p.inQueue });
 		}
 	}
 	queue.sort(function(a, b) {
@@ -431,6 +452,14 @@ function updateCards(match, result, timeout, achievements) {
 	if (!match || !match.piles) {
 		return;
 	}
+
+	sendNotificationToAllPlayers({
+		match,
+		by: result.by,
+		text: result.text,
+		duration: result.duration
+	});
+
 	var piles = [];
 	for (let i = 0; i < match.piles.length; i++) {
 		var asStrings = match.piles[i].cards.map(c => Identities[c.identity] + Suits[c.suit]);
@@ -463,7 +492,7 @@ function updateCards(match, result, timeout, achievements) {
 	console.log("updateCards: cards updated");
 }
 
-function getAchievements(match, result) {
+function getAchievements(match) {
 	if (!match || !match.piles) {
 		return;
 	}
@@ -542,7 +571,7 @@ function getAchievements(match, result) {
 			by: player.name,
 			text: achievementText
 		});
-	} else if (isStart && result.name === "Offer") {
+	} else if (isStart && diff === -1 && suits[size - 2] === suits[size - 1]) {
 		newAchievements.push({
 			by: player.name,
 			text: "Offer Start"
@@ -617,7 +646,7 @@ function checkWin(match, player, result) {
 	});
 
 	if (inGame <= 1) {
-		var achievements = getAchievements(match, result);
+		var achievements = getAchievements(match);
 		updateCards(match, result, 0, achievements);
 
 		match.playerIds.forEach( function(id) {
@@ -673,8 +702,8 @@ function removeMatch(matchId) {
 }
 
 //Card Games
-var Suits = Object.freeze({"Clubs":"C", "Hearts":"H", "Spades":"S", "Diamonds":"D", "Red": "R", "Black":"B"});
-var Identities = Object.freeze({"Joker":"X", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"T", 11:"J", 12:"Q", 13:"K", 14:"A"});
+var Suits = Object.freeze({ "Clubs":"C", "Hearts":"H", "Spades":"S", "Diamonds":"D", "Red": "R", "Black":"B" });
+var Identities = Object.freeze({ "Joker":"X", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"T", 11:"J", 12:"Q", 13:"K", 14:"A" });
 
 function Card(identity, suit) {
 	this.identity = identity;
@@ -684,14 +713,14 @@ function Card(identity, suit) {
 function createDeck() {
 	var numJokers = 3;
 	var deck = [];
-	var suits = ["Clubs", "Hearts", "Spades", "Diamonds"];
+	var suits = [ "Clubs", "Hearts", "Spades", "Diamonds" ];
 	suits.forEach(function(suit) {
 		for (var i = 2; i <= 14; i++) {
 			deck.push(new Card(i, suit));
 		}
 	});
 
-	var colors = ["Red", "Black"];
+	var colors = [ "Red", "Black" ];
 	for (var i = 0; i < numJokers; i++) {
 		deck.push(new Card("Joker", colors[i%2]));
 	}
@@ -749,10 +778,10 @@ function addPile(match) {
 	return pile;
 }
 
-function Rule(name, description, value, fritsPauzeTime) {
+function Rule(name, text, duration, fritsPauzeTime) {
 	this.name = name;
-	this.description = description;
-	this.value = value;
+	this.text = text;
+	this.duration = duration;
 	this.fritsPauzeTime = fritsPauzeTime;
 }
 
@@ -763,7 +792,6 @@ var Rules = [
 	new Rule("Fout", "Fritsje des: deze zet bestaat niet", 0, 2500),
 	new Rule("Goed", "heeft een kaart opgelegd", 2, 0),
 	new Rule("Update", "", 0, 0),
-	new Rule("Start", "", 2, 0),
 	new Rule("BeurtOver", "Fritsje des en beurt voorbij: je hebt maar " + (turnTime/1000) + " seconden", 2, 2500),
 	new Rule("Offer", "Offerfrits: neem een Fritsje", 1, 2500),
 	new Rule("Joker", "Joker: andere spelers nemen een Fritsje", 1, 9000),
@@ -942,7 +970,7 @@ function placeOnPile(cardId, pileId, match, hand, socketId, player) {
 	var card = hand[cardId];
 	var result = checkCards(card, pileId, match, hand, socketId, player);
 
-	if (result.value > 0) {
+	if (result.duration > 0) {
 		var pile = match.piles[pileId];
 
 		pile.cards.push(card);

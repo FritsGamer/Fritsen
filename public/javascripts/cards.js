@@ -194,7 +194,7 @@ function showHand(cards) {
 document.addEventListener("touchmove", (e) => {
 	e.preventDefault();
 	e.stopPropagation();
-}, {passive: false});
+}, { passive: false });
 
 function select(card) {
 	if (useTouch) {

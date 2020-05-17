@@ -282,13 +282,6 @@ img.cardblock, img.card {
   }
 }
 
-#turn {
-  display: block;
-  position: absolute;
-  top: -10%;
-  color: white;
-}
-
 #waiting{
   top: -20%;
   width: 100%;

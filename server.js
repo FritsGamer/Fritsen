@@ -27,11 +27,18 @@ var matches = {};
 var queueNumber = 1;
 
 // CONSTANTS
-const vuileFritsTime = 9000;
-const vuileFritsTimeout = 2000;
-const baudetTime = 10000;
-const disconnectTimeout = 20000;
-const turnTime = 99000;
+const DURATIONS = {
+	vuileFrits: 9000,
+	baudet: 10000,
+	turn: 99000,
+};
+
+const TIMEOUTS = {
+	vuileFrits: 2000,
+	aasKoning: 4000,
+	disconnect: 20000,
+};
+
 const startHand = 5;
 const maxParticipants = 6;
 
@@ -78,7 +85,7 @@ function onDisconnect() {
 		if (match && !checkWin(match, player, result)) {
 			match.state = "disconnect";
 			player.disconnect = true;
-			var timeout = disconnectTimeout;
+			var timeout = TIMEOUTS.disconnect;
 
 			setTimeout(function() {
 				console.log("onDisconnect: timeout expired ", match);
@@ -91,7 +98,7 @@ function onDisconnect() {
 					});
 					checkWin(match, player, result);
 				}
-			}, disconnectTimeout);
+			}, timeout);
 
 			return updateCards(match, result, timeout);
 		}
@@ -235,7 +242,7 @@ function createMatch(participants) {
 	match.playerIds.forEach( function(id) {
 		io.to(id).emit("match started");
 	});
-	updateCards(match, getRule("Update", false), vuileFritsTime);
+	updateCards(match, getRule("Update", false), DURATIONS.vuileFrits);
 
 	setTimeout(function() {
 		if (match.state === "vuileFrits") {
@@ -244,7 +251,7 @@ function createMatch(participants) {
 		match.turnId = -1;
 		nextPlayer(match);
 		updateCards(match, getRule("Start", false));
-	}, vuileFritsTime);
+	}, DURATIONS.vuileFrits);
 	console.log("createMatch: match created");
 }
 
@@ -257,6 +264,10 @@ function playCard(socketId, cardId, pileId) {
 	var match = findMatchBySocketId(socketId);
 	var player = players[socketId];
 	if (!match || !player) {
+		return;
+	}
+
+	if (match.state === "aasKoning" && socketId !== match.turnId) {
 		return;
 	}
 
@@ -303,6 +314,9 @@ function playCard(socketId, cardId, pileId) {
 		if (match.state === "baudet" && match.baudetTimeout) {
 			clearTimeout ( match.baudetTimeout );
 			match.baudetTimeout = false;
+		} else if (match.state === "aasKoning" && match.aasKoningTimeout) {
+			clearTimeout ( match.aasKoningTimeout );
+			match.aasKoningTimeout = false;
 		}
 
 		match.state = "playing";
@@ -310,7 +324,7 @@ function playCard(socketId, cardId, pileId) {
 
 		if (result.name === "Baudet") {
 			match.state = "baudet";
-			timeout = baudetTime;
+			timeout = DURATIONS.baudet;
 
 			match.baudetTimeout = setTimeout(function() {
 				newHand(hand, match.deck);
@@ -320,7 +334,16 @@ function playCard(socketId, cardId, pileId) {
 				match.baudetTimeout = false;
 				nextPlayer(match);
 				updateCards(match, getRule("Update", false));
-			}, baudetTime);
+			}, timeout);
+		} else if (result.name === "KoningMetAasInHand") {
+			match.state = "aasKoning";
+			match.aasKoningTimeout = setTimeout(function() {
+				if (match.state === "aasKoning") {
+					match.state = "playing";
+				}
+				match.aasKoningTimeout = false;
+				nextPlayer(match);
+			}, TIMEOUTS.aasKoning);
 		} else {
 			nextPlayer(match);
 		}
@@ -335,6 +358,10 @@ function fritsCards() {
 	var player = players[this.id];
 
 	if (!match || !player || match.state === "timeout" || match.state === "disconnect") {
+		return;
+	}
+
+	if (match.state === "aasKoning" && this.id !== match.playerId) {
 		return;
 	}
 
@@ -376,7 +403,7 @@ function vuileFritsCards() {
 			newHand(hand, match.deck);
 			var result = getRule("VuileFrits", player.name);
 			updateCards(match, result);
-			player.vuilefrits = Date.now() + vuileFritsTimeout;
+			player.vuilefrits = Date.now() + TIMEOUTS.vuileFrits;
 		}
 	}
 	console.log("vuileFritsCards: handled");
@@ -537,11 +564,17 @@ function getAchievements(match, result) {
 			text: achievementText
 		});
 	} else if (diff === 1 && suits[size - 2] === suits[size - 1]) {
-		const achievementText = isStart ? "Soepele Start" : "Soepele Frits";
-		newAchievements.push({
-			by: player.name,
-			text: achievementText
-		});
+		var achievementText = isStart ? "Soepele Start" : "Soepele Frits";
+		if (result.name !== "KoningMetAasInHand") {
+			if (result.name === "AasKoning") {
+				achievementText = "Aas Koning!";
+			}
+
+			newAchievements.push({
+				by: player.name,
+				text: achievementText
+			});
+		}
 	} else if (isStart && result.name === "Offer") {
 		newAchievements.push({
 			by: player.name,
@@ -596,7 +629,7 @@ function nextPlayer(match) {
 
 		match.turnTimer = setTimeout(function() {
 			skipTurn(match, p);
-		}, turnTime);
+		}, DURATIONS.turn);
 	}
 }
 
@@ -764,7 +797,7 @@ var Rules = [
 	new Rule("Goed", "heeft een kaart opgelegd", 2, 0),
 	new Rule("Update", "", 0, 0),
 	new Rule("Start", "", 2, 0),
-	new Rule("BeurtOver", "Fritsje des en beurt voorbij: je hebt maar " + (turnTime/1000) + " seconden", 2, 2500),
+	new Rule("BeurtOver", "Fritsje des en beurt voorbij: je hebt maar " + (DURATIONS.turn/1000) + " seconden", 2, 2500),
 	new Rule("Offer", "Offerfrits: neem een Fritsje", 1, 2500),
 	new Rule("Joker", "Joker: andere spelers nemen een Fritsje", 1, 9000),
 	new Rule("Kim", "Kim: andere spelers nemen een Kimmetje", 1, 9000),
@@ -777,7 +810,8 @@ var Rules = [
 	new Rule("Erik", "Erikje: je hebt zichzelf geklaverd! ", 1, 2500),
 	new Rule("KlaverFout", "Fritsje des: deze zet bestaat niet", 0, 2500),
 	new Rule("DubbelNegen", "Dubbele Frits: 9 op 9!", 1, 9000),
-	//new Rule("AasKoning", "Nice! Aas en Koning op Kim", 1, 0),
+	new Rule("KoningMetAasInHand", "heeft een kaart opgelegd", 2, 0),
+	new Rule("AasKoning", "Nice! Aas en Koning op Kim", 2, 0),
 	new Rule("Frits", "heeft gefritst", 1, 1000),
 	new Rule("AlGefritst", "Fritsje des: je hebt al gefritst", 0, 2500),
 	new Rule("JokerUit", "Fritsje des: je mag niet uitfritsen met een joker", 0, 2500),
@@ -817,6 +851,8 @@ function getRule(name, playerName) {
 
 
 function checkCards(card, pileId, match, hand, socketId, player) {
+	let pile = match.piles[pileId];
+
 	//7. 3 of Clubs on the last 6, when baudet is executed (Klaver)
 	//   first check as all other moves should be rejected during the baudetTimeout
 	if (match.state === "baudet") {
@@ -831,8 +867,19 @@ function checkCards(card, pileId, match, hand, socketId, player) {
 		}
 	}
 
+	if (match.state === "aasKoning") {
+		if (pile.cards.length === 0) {
+			return getRule("Fout", player.name);
+		}
 
-	var pile = match.piles[pileId];
+		var top = pile.cards[pile.cards.length - 1];
+
+		if (card.identity === 14 && card.suit === top.suit && match.lastMove === pileId) {
+			return getRule("AasKoning", player.name);
+		}
+
+		return getRule("Fout", player.name);
+	}
 
 	//1. Only if card is Joker on Joker pile (Joker)
 	if (card.identity === "Joker" || pile.jokerPile) {
@@ -853,7 +900,7 @@ function checkCards(card, pileId, match, hand, socketId, player) {
 		}
 	}
 
-	var top = pile.cards[pile.cards.length - 1];
+	top = pile.cards[pile.cards.length - 1];
 
 	var cardId = Identities[card.identity];
 	var pileIdentity = Identities[top.identity];
@@ -896,6 +943,16 @@ function checkCards(card, pileId, match, hand, socketId, player) {
 				return getRule("Baudet", player.name);
 			} else {
 				return getRule("BaudetFout", player.name);
+			}
+		}
+
+		if (cardId === "K" && cardSuit === pileSuit) {
+			for (var num in hand) {
+				var handCardIdentity = Identities[hand[num].identity];
+				var handCardSuit = Suits[hand[num].suit];
+				if (handCardIdentity === "A" && handCardSuit === pileSuit) {
+					return getRule("KoningMetAasInHand", player.name);
+				}
 			}
 		}
 	}

@@ -117,6 +117,8 @@ function onDisconnect() {
 // MATCH HANDLERS
 
 function joinQueue(socketId, name) {
+	name = name.replace(/[\u{0080}-\u{FFFF}]/gu,"");
+
 	console.log("joinQueue: joinQueue: " + socketId + " - " + name);
 	var player = players[socketId];
 	if (!player) {

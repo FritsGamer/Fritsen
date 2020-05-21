@@ -137,7 +137,7 @@ function resetGame() {
 //////////  Functions
 // eslint-disable-next-line no-unused-vars
 function enterQueue(name) {
-	socket.emit("joinQueue", name);
+	socket.emit("joinQueue", name.replace(/[\u{0080}-\u{FFFF}]/gu,""));
 }
 
 // eslint-disable-next-line no-unused-vars

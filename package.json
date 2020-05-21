@@ -5,10 +5,14 @@
   "version": "0.1.9",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "express": "~4.16.4",
     "socket.io": "~2.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
   }
 }

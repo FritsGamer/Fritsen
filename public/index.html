@@ -18,10 +18,22 @@
 
 	<body>
 		<div class="table-image">
+			<div id="achievement-sounds">
+				<audio id="achievement_1">
+					<source src="sounds/achievement_1.mp3" type="audio/mpeg">				
+				</audio>
+				<audio id="achievement_2">
+					<source src="sounds/achievement_2.mp3" type="audio/mpeg">				
+				</audio>
+				<audio id="achievement_3">
+					<source src="sounds/achievement_3.mp3" type="audio/mpeg">				
+				</audio>
+			</div>
+
 			<div id="queue-image" onclick="getPlayerNames()"></div>
 			<div id="rules-image" onclick="openRulePDF()"></div>
 			<div class="board-image">
-				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false">
+				<input id="playerName" class="start" maxlength="20" placeholder="enter name" type="text" spellcheck="false" autofocus>
 				<button id="joinGame" class="start start-image" onclick="joinQueue()"></button>
 
 				<div id="waiting" class="queue" hidden>Waiting for other players...</div>
@@ -46,8 +58,8 @@
 				<div id="timeout-container" class="boardMessage">
 					<div id="timeout-text" class="text"></div>
 				</div>
-				<div id="lang-flag" class="flag nl" onclick="switchLanguage()"></div>
 			</div>
+			<div id="lang-flag" class="flag nl" onclick="switchLanguage()"></div>
 			<div id="notifications-container"></div>
 		</div>
 		<div id="notifications-container"></div>
@@ -73,6 +85,9 @@
 			});
 
 			function joinQueue(){
+				if (document.activeElement) {
+					document.activeElement.blur();
+				}
 				var name = $('#playerName').val();
 				if(name != ""){
 					$('.start').hide();

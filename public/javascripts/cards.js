@@ -1,16 +1,18 @@
-function showDeck(nrCards){
+// eslint-disable-next-line no-unused-vars
+function showDeck(nrCards) {
 	var deck = $("#deck");
 	deck.empty();
 
 	nrCards /= 3;
 
-	for (i = 0; i < nrCards; i++) { 
-		card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.png'/>";
+	for (var i = 0; i < nrCards; i++) {
+		var card = "<img class='card' style=\"margin-top:" + (i*0.4) + "%\" src='" + getCardsUrl() + "CR.svg'/>";
 		deck.append(card);
 	}
 }
 
-function showPiles(piles, frits, lastmove){
+// eslint-disable-next-line no-unused-vars
+function showPiles(piles, frits, lastmove) {
 	var pilesDiv = $("#piles");
 	pilesDiv.empty();
 
@@ -18,31 +20,33 @@ function showPiles(piles, frits, lastmove){
 		var pile = piles[i];
 		var div = "<div id='pile" + i + "' class='cardblock pile'></div>";
 		const p = $(div);
-		
-		if(pile.length > 0 || frits || i === 0) p.addClass("open");
-		if(i == 0){ 
+
+		if (pile.length > 0 || frits || i === 0) {
+			p.addClass("open");
+		}
+		if (i == 0) {
 			p.addClass("joker");
-		}else{
+		} else {
 			var num = i - 1;
 			var mtop = (num%3) * 20;
 			var mleft = Math.floor(num/3) * 15;
 			p.css("margin-top", mtop + "%");
 			p.css("margin-left", mleft + "%");
 		}
-		if (i == lastmove){
+		if (i == lastmove) {
 			p.addClass("lastmove");
 		}
 		if (pile.length == 0) {
 			p.addClass("empty");
 		}
-	
+
 		for (var j = 0; j < pile.length; j++) {
 			var c = pile[j];
-			var img = "<img class='card' src='" + getCardsUrl() + c + ".png' style=\"margin-top:" + (j*0.4) + "%\"/>";
+			var img = "<img class='card' src='" + getCardsUrl() + c + ".svg' style=\"margin-top:" + (j*0.4) + "%\"/>";
 			p.append(img);
 		}
 		p.click(function() {
-			 placeCard($(this));
+			placeCard($(this));
 		});
 		pilesDiv.append(p);
 	}
@@ -50,7 +54,8 @@ function showPiles(piles, frits, lastmove){
 
 
 var useTouch = false;
-function showHand(cards){
+// eslint-disable-next-line no-unused-vars
+function showHand(cards) {
 	var hand = $("#hand");
 	hand.empty();
 
@@ -62,7 +67,7 @@ function showHand(cards){
 	for (let i = 0; i < cards.length; i++) {
 		const card = cards[i];
 		var topMargin, leftMargin;
-		if(i < firstRow){
+		if (i < firstRow) {
 			topMargin = firstRowTop;
 			leftMargin = -4 * firstRow + 8 * i;
 		} else {
@@ -70,12 +75,12 @@ function showHand(cards){
 			leftMargin = -4 * (cards.length - firstRow) + 8 * (i - firstRow);
 		}
 
-		const elem = $('<img>')
-			.attr('id', 'card'+i)
-			.attr('src', getCardsUrl() + card + '.png')
-			.addClass('cardblock')
-			.css('margin-top', topMargin+'%')
-			.css('margin-left', leftMargin+'%')
+		const elem = $("<img>")
+			.attr("id", "card"+i)
+			.attr("src", getCardsUrl() + card + ".svg")
+			.addClass("cardblock")
+			.css("margin-top", topMargin+"%")
+			.css("margin-left", leftMargin+"%")
 			.click(function () {
 				select(this);
 			});
@@ -84,11 +89,14 @@ function showHand(cards){
 		let touchStartX, touchStartY, cardStartX, cardStartY;
 		let startAt;
 		let activeAtStart = false;
-		elem.on('touchstart', function (e) {
+		elem.on("touchstart", function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
 			useTouch = true;
 			startAt = (new Date()).getTime();
 			// Reset transition from previous drag
-			elem.css('transition', '');
+			elem.css("transition", "");
 
 			// Save start touch location
 			const touch = e.originalEvent.changedTouches[0];
@@ -101,41 +109,44 @@ function showHand(cards){
 			cardStartY = rect.top;
 
 			// Highlight open piles
-			activeAtStart = elem.hasClass('active');
-			$('#piles .pile.open').addClass('active');
-			$('#hand .cardblock').removeClass('active'); // Deselect other cards
-			elem.addClass('active');
+			activeAtStart = elem.hasClass("active");
+			$("#piles .pile.open").addClass("active");
+			$("#hand .cardblock").removeClass("active"); // Deselect other cards
+			elem.addClass("active");
 		});
-		elem.on('touchmove', function (e) {
+		elem.on("touchmove", function (e) {
 			const touch = e.originalEvent.changedTouches[0];
 			if (!touch) {
 				return;
 			}
 
+			e.preventDefault();
+			e.stopPropagation();
+
 			const x = touch.pageX - touchStartX;
 			const y = touch.pageY - touchStartY;
-			elem.css('transform', 'translate('+x+'px, '+y+'px)');
-		})
+			elem.css("transform", "translate("+x+"px, "+y+"px)");
+		});
 
 		const reset = function () {
 			// Animate back to the original location
-			elem.css('transition', 'transform 300ms ease-in-out');
-			elem.css('transform', 'translate(0, 0)');
+			elem.css("transition", "transform 300ms ease-in-out");
+			elem.css("transform", "translate(0, 0)");
 
 			// Remove highlights of open piles
 			const now = (new Date()).getTime();
 			if (now-startAt < 200) {
 				// Assume this is a cancelled drag, and not a tap
 				if (activeAtStart) {
-					elem.removeClass('active');
-					$('.open').removeClass('active');
+					elem.removeClass("active");
+					$(".open").removeClass("active");
 				} else {
-					elem.addClass('active');
-					$('.open').addClass('active');
+					elem.addClass("active");
+					$(".open").addClass("active");
 				}
 			}
-		}
-		elem.on('touchend', function (e) {
+		};
+		elem.on("touchend", function (e) {
 			const touch = e.originalEvent.changedTouches[0];
 			const targetX = touch.pageX;
 			const targetY = touch.pageY;
@@ -144,7 +155,7 @@ function showHand(cards){
 			let found = false;
 			$(".pile").each(function() {
 				const pile = $(this);
-				if (!pile.hasClass('open')) {
+				if (!pile.hasClass("open")) {
 					return;
 				}
 				const rect = this.getBoundingClientRect();
@@ -157,8 +168,8 @@ function showHand(cards){
 				found = true;
 
 				// Animate to the pile
-				elem.css('transition', 'transform 100ms ease-in-out');
-				elem.css('transform', 'translate('+(rect.left - cardStartX)+'px, '+(rect.top - cardStartY)+'px)');
+				elem.css("transition", "transform 100ms ease-in-out");
+				elem.css("transform", "translate("+(rect.left - cardStartX)+"px, "+(rect.top - cardStartY)+"px)");
 
 				// Place the card after the animation
 				setTimeout(function () {
@@ -172,11 +183,18 @@ function showHand(cards){
 			}
 		});
 		// Cancelled, reset to deck (dragged outside screen or something)
-		elem.on('touchcancel', reset);
+		elem.on("touchcancel", reset);
 
 		hand.append(elem);
 	}
 }
+
+// When a touch event has not been handled by the card deck,
+// and has bubbled to the root, cancel it to prevent overscroll
+document.addEventListener("touchmove", (e) => {
+	e.preventDefault();
+	e.stopPropagation();
+}, {passive: false});
 
 function select(card) {
 	if (useTouch) {
@@ -184,18 +202,18 @@ function select(card) {
 	}
 
 	var selected = $(card);
-	if (selected.hasClass('active')) {
-		selected.removeClass('active');
-		$('.open').removeClass('active');
+	if (selected.hasClass("active")) {
+		selected.removeClass("active");
+		$(".open").removeClass("active");
 	} else {
-		$('img').removeClass('active');
-		selected.addClass('active');
-		$('.open').addClass('active');
+		$("img").removeClass("active");
+		selected.addClass("active");
+		$(".open").addClass("active");
 	}
 }
 
 function placeCard(pile) {
-	var selected = $('#hand .active');
+	var selected = $("#hand .active");
 	if (selected.length != 1) {
 		return;
 	}
@@ -203,13 +221,14 @@ function placeCard(pile) {
 	var selectedCard = selected[0];
 	var selectedPile = pile[0];
 
-	playCard(selectedCard.id, selectedPile.id)
+	// eslint-disable-next-line no-undef
+	playCard(selectedCard.id, selectedPile.id);
 }
 
 function getCardsUrl() {
-	if ($('#lang-flag').hasClass('fr')){
-		return '../images/cards/fr/';
+	if ($("#lang-flag").hasClass("fr")) {
+		return "../images/cards/fr/";
 	}
-	
-	return '../images/cards/en/';
+
+	return "../images/cards/en/";
 }
